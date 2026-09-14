@@ -50,3 +50,10 @@
   <script src="static/functional.js"></script>
 </body>
 </html>
+
+<script>
+  if (location.pathname.endsWith("/") && location.pathname !== "/") {
+    history.replaceState(null, "", location.pathname + "index.html" + location.search + location.hash);
+    location.reload();
+  }
+</script>
