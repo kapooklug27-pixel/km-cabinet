@@ -1,0 +1,361 @@
+/* =====================================================================
+   THE LOOK OF THE SYSTEM -- COLORS AND TYPEFACE.
+
+   This is the one file to open to change how the system looks. It
+   holds only named values -- "this is the button color", "this is the
+   page background" -- never the code that decides what a button does
+   or who is allowed to see one. That logic lives in other files, and
+   nothing in here can reach it: the worst a mistake in this file can do
+   is make something the wrong color, or make the file fail to load at
+   all (which shows as the plain, unstyled page underneath, not a
+   broken system).
+
+   HOW TO CHANGE SOMETHING: find the name below -- each has a
+   plain-language comment above the block it belongs to -- and change
+   the value after the colon. Most values are colors, written as
+   #rrggbb (six digits) or the shorter #rgb form; case does not matter,
+   and the file already picks names that carry no meaning as English
+   words, only as pointers -- rename nothing, only retint. Save the
+   file; no restart is needed, only a reload of the page in a browser.
+
+   THE TYPEFACE is set once, in the file that loads this one, as
+   "Sarabun". Swapping it needs actual font files added to the system,
+   not just a name changed here -- ask, and it can be done the same way.
+
+   THREE COPIES OF THE COLOR LIST FOLLOW, and that is deliberate: one
+   for ordinary daytime viewing, and two for dark mode (a visitor whose
+   device is already set to dark, and someone who flips the switch in
+   the corner of the page by hand). A color changed in the first list
+   should usually be changed under the same name in the other two as
+   well, or it will look right by day and wrong by night.
+   ===================================================================== */
+
+    /* THE THEME TOKENS. Every color the page uses is one of these, so
+       dark mode is these two blocks and nothing else -- no rule below
+       this point names a raw color. Light values are exactly what this
+       stylesheet used before dark mode existed; nothing here changed
+       what a light-mode visitor sees.
+
+       Two ways a page ends up dark: the visitor's OS/browser is set to
+       dark and never overrode it (the media query), or they used the
+       switch in the corner (data-theme, written by the inline script
+       below). The switch wins over the OS setting when both are
+       present, because someone who has NAMED a preference for THIS
+       page is stating something more specific than their system-wide
+       default.
+
+       A few colors are deliberately absent from this list: the four
+       places a solid, saturated chip already carries white text on it
+       directly (the sent-in-review counter, the active search-facet
+       pill, the current step marker on the entry-journey diagram, and
+       the destructive Retire/Withdraw button) read fine against either
+       page background without changing, so they are left as plain
+       colors rather than tokens with nothing to switch between. */
+    :root {
+      /* Tells the browser to theme its OWN chrome -- form controls,
+         scrollbars, the default focus ring -- to match this page.
+         LIGHT, not "light dark": the two-value form says both are
+         SUPPORTED and lets the browser pick from the OS preference,
+         so a visitor whose system is dark got dark dropdowns and a
+         dark search box on a light page. Reported 2026-08-24 and
+         reproduced. The dark blocks below set it to `dark` at exactly
+         the two moments the page itself goes dark, which is the only
+         time it should. */
+      color-scheme: light;
+      /* #fafafa to match the page this system is being placed inside
+         (checked 2026-08-24), rather than the blue-grey #f5f7fa it used
+         before. The card and panel tints below stay faintly blue -- they
+         are what separates a card from the page, and neutralising those
+         too would flatten the whole layout to make one colour match. */
+      /* HOW WIDE THE CONTENT COLUMN GETS. Was a flat 720px, chosen when
+         this was mostly prose. It is mostly LISTS -- an entry's title,
+         its code, its owner and its date on one line -- and at 720px a
+         Thai name routinely wrapped alone onto a second line. Widened
+         to 1200px first; Kin's own read of it was "too wide" (2026-08-24)
+         and asked for narrower, so this is a second, smaller step
+         rather than the original guess restated.
+         min() so it still fits a narrower window without a horizontal
+         scrollbar: 960px is half of a 1920px screen, and 90vw takes
+         over below ~1050px. A proper mobile pass is a separate,
+         deliberately deferred job. */
+      --page-width: min(960px, 90vw);
+      --bg-page: #fafafa;
+      --text: #1a1a1a;
+      --border: #ddd;
+      --accent: #0b5cab;
+      --accent-hover: #08447f;
+      --danger-bg: #fdecea;
+      --danger-border-soft: #f5c2c0;
+      --danger-text-deep: #7a2c26;
+      --warn-bg: #fff8e1;
+      --warn-border: #f0d98c;
+      --warn-text: #6b5900;
+      --notice-bg: #eaf2fb;
+      --notice-border: #b8d3ee;
+      --notice-text: #14456f;
+      --near-dup-bg: #fef4f2;
+      --near-dup-border: #f0c9c3;
+      --near-dup-text: #7c3a32;
+      --bg-card: #fff;
+      --secondary-btn-border: #d8a9a2;
+      --secondary-btn-hover-bg: #fbeeec;
+      --text-muted: #666;
+      --border-soft: #ccc;
+      --home-list-border: #e4e9ef;
+      --text-muted-2: #5b6b7c;
+      --navy-text: #33475b;
+      --border-strong: #9fb3c8;
+      --propose-bg: #f7f9fb;
+      --panel-border: #dde3ea;
+      --warn-bg-soft: #fff6e0;
+      --warn-text-soft: #7a5a12;
+      --warn-border-soft: #e6d3a0;
+      --danger-border: #e6b8b8;
+      --danger-text: #8a2b2b;
+      --whoami-bg: #f4f6f8;
+      --due-danger-text: #a1423a;
+      --viewer-bar-bg: #eef2f7;
+      --facet-border: #b9c6d4;
+      --facet-text: #24486e;
+      --info-chip-bg: #eef4fb;
+      --why-text-border: #c3d6ea;
+      --success-chip-bg: #eef7ef;
+      --success-border: #bfd9c2;
+      --success-text: #2c5c34;
+      --superseded-bg: #f0f0f0;
+      --superseded-text: #555;
+      --danger-bg-soft: #fdeeee;
+      --text-faint: #aaa;
+      --lane-hover-bg: #f7fafd;
+      --journey-border: #dde3e6;
+      --accent-soft: #7aa;
+      --journey-bg: #fbfcfd;
+      --journey-line: #cfd8dc;
+      --journey-mark-bg: #eceff1;
+      --journey-muted: #90a4ae;
+      --journey-meta-text: #607d8b;
+      --journey-note-text: #8a6d3b;
+      --success-bg-strong: #e3f1e5;
+      /* THE JOURNEY DIAGRAM'S OWN TOKENS, not --success-*, at Kin's
+         request for a more vivid done-marker (2026-08-24). Those are
+         shared with .why-topic on the search page, so changing them
+         would have brightened an unrelated chip nobody asked to
+         change. A solid, saturated fill with a white check -- the same
+         weight as .journey-current's own hardcoded solid green,
+         different enough in hue that a person scanning the row still
+         tells "done" from "in progress" at a glance. */
+      --journey-done-bg: #1e9e50;
+      --journey-done-text: #ffffff;
+      --journey-done-border: #1a8745;
+      --journey-current-label: #17331c;
+      --journey-current-who: #33474f;
+      --journey-upcoming-text: #78909c;
+      --help-border: #9bb;
+      --help-bg: #eef4f6;
+      --help-text: #356;
+      --help-hover-bg: #dce9ee;
+      --popover-text: #222;
+      --popover-border: #cbd6da;
+      --hover-tint: #f2f6fa;
+      --neutral-chip-bg: #eef2f6;
+      --neutral-chip-hover-bg: #dce7f2;
+      --table-border: #eee;
+      --table-header-text: #444;
+      --btn-border: #b9c6d2;
+      --btn-text: #23394f;
+      --action-danger-border: #e0b4b4;
+      --action-danger-hover-bg: #f9dede;
+      --strike-text: #777;
+
+      /* THE FOUR SOLID CHIPS AND THE DANGER BUTTON, named here as their
+         own tokens even though none of them switch value between light
+         and dark -- unlike everything above, these read fine against
+         either page background without changing (see "deliberately
+         absent from this list" above, which is what they used to be
+         before this section existed), so there is no dark-mode entry
+         for any of them. Named anyway because this file is meant to be
+         the one place holding the whole visual identity -- a
+         brand-color change should not also require remembering six
+         rules this list does not cover. */
+      --chip-on-solid-text: #fff;
+      --chip-inflight-bg: #33475b;
+      --facet-active-bg: #24486e;
+      --journey-current-bg: #2c5c34;
+      --btn-danger-border: #c98d8d;
+      --btn-danger-bg: #b4413f;
+      --btn-danger-hover-bg: #9c3634;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        color-scheme: dark;
+        --bg-page: #10161c;
+        --text: #e6eaed;
+        --border: #33414d;
+        --accent: #4a9eff;
+        --accent-hover: #6db4ff;
+        --danger-bg: #3a2020;
+        --danger-border-soft: #6b3a37;
+        --danger-text-deep: #e8998f;
+        --warn-bg: #362c14;
+        --warn-border: #6b5527;
+        --warn-text: #e0c064;
+        --notice-bg: #16283a;
+        --notice-border: #33587e;
+        --notice-text: #8fc0ec;
+        --near-dup-bg: #362320;
+        --near-dup-border: #6b433d;
+        --near-dup-text: #e2a89e;
+        --bg-card: #1b232c;
+        --secondary-btn-border: #6f453f;
+        --secondary-btn-hover-bg: #40241f;
+        --text-muted: #9aa7b1;
+        --border-soft: #3a4753;
+        --home-list-border: #2c3946;
+        --text-muted-2: #9fb0bd;
+        --navy-text: #a9bdd0;
+        --border-strong: #465a6c;
+        --propose-bg: #1c242e;
+        --panel-border: #2c3946;
+        --warn-bg-soft: #35301a;
+        --warn-text-soft: #e0b062;
+        --warn-border-soft: #6b5a2a;
+        --danger-border: #6b3a3a;
+        --danger-text: #ec9d92;
+        --whoami-bg: #1a222b;
+        --due-danger-text: #e79088;
+        --viewer-bar-bg: #1c2531;
+        --facet-border: #3a5570;
+        --facet-text: #8fc0ec;
+        --info-chip-bg: #1c2e42;
+        --why-text-border: #33587e;
+        --success-chip-bg: #1b3222;
+        --success-border: #3a5c42;
+        --success-text: #8fd19d;
+        --superseded-bg: #262d33;
+        --superseded-text: #aab5bd;
+        --danger-bg-soft: #3a2222;
+        --text-faint: #64707c;
+        --lane-hover-bg: #182430;
+        --journey-border: #2c3946;
+        --accent-soft: #5a8a9a;
+        --journey-bg: #161d24;
+        --journey-line: #37444f;
+        --journey-mark-bg: #232c34;
+        --journey-muted: #839aa6;
+        --journey-meta-text: #8098a6;
+        --journey-note-text: #c9a869;
+        --success-bg-strong: #1a2f22;
+        --journey-done-bg: #22b358;
+        --journey-done-text: #ffffff;
+        --journey-done-border: #1a8745;
+        --journey-current-label: #b9e0c2;
+        --journey-current-who: #b7ccd6;
+        --journey-upcoming-text: #6d8290;
+        --help-border: #4a7080;
+        --help-bg: #16232a;
+        --help-text: #a8ccd8;
+        --help-hover-bg: #1f333c;
+        --popover-text: #e4e9ee;
+        --popover-border: #33414d;
+        --hover-tint: #202b36;
+        --neutral-chip-bg: #232e3a;
+        --neutral-chip-hover-bg: #2c3946;
+        --table-border: #263241;
+        --table-header-text: #c7d0d8;
+        --btn-border: #465a6c;
+        --btn-text: #c3d3e0;
+        --action-danger-border: #6b3a3a;
+        --action-danger-hover-bg: #45201f;
+        --strike-text: #7c8894;
+      }
+    }
+    :root[data-theme="dark"] {
+      color-scheme: dark;
+        --bg-page: #10161c;
+        --text: #e6eaed;
+        --border: #33414d;
+        --accent: #4a9eff;
+        --accent-hover: #6db4ff;
+        --danger-bg: #3a2020;
+        --danger-border-soft: #6b3a37;
+        --danger-text-deep: #e8998f;
+        --warn-bg: #362c14;
+        --warn-border: #6b5527;
+        --warn-text: #e0c064;
+        --notice-bg: #16283a;
+        --notice-border: #33587e;
+        --notice-text: #8fc0ec;
+        --near-dup-bg: #362320;
+        --near-dup-border: #6b433d;
+        --near-dup-text: #e2a89e;
+        --bg-card: #1b232c;
+        --secondary-btn-border: #6f453f;
+        --secondary-btn-hover-bg: #40241f;
+        --text-muted: #9aa7b1;
+        --border-soft: #3a4753;
+        --home-list-border: #2c3946;
+        --text-muted-2: #9fb0bd;
+        --navy-text: #a9bdd0;
+        --border-strong: #465a6c;
+        --propose-bg: #1c242e;
+        --panel-border: #2c3946;
+        --warn-bg-soft: #35301a;
+        --warn-text-soft: #e0b062;
+        --warn-border-soft: #6b5a2a;
+        --danger-border: #6b3a3a;
+        --danger-text: #ec9d92;
+        --whoami-bg: #1a222b;
+        --due-danger-text: #e79088;
+        --viewer-bar-bg: #1c2531;
+        --facet-border: #3a5570;
+        --facet-text: #8fc0ec;
+        --info-chip-bg: #1c2e42;
+        --why-text-border: #33587e;
+        --success-chip-bg: #1b3222;
+        --success-border: #3a5c42;
+        --success-text: #8fd19d;
+        --superseded-bg: #262d33;
+        --superseded-text: #aab5bd;
+        --danger-bg-soft: #3a2222;
+        --text-faint: #64707c;
+        --lane-hover-bg: #182430;
+        --journey-border: #2c3946;
+        --accent-soft: #5a8a9a;
+        --journey-bg: #161d24;
+        --journey-line: #37444f;
+        --journey-mark-bg: #232c34;
+        --journey-muted: #839aa6;
+        --journey-meta-text: #8098a6;
+        --journey-note-text: #c9a869;
+        --success-bg-strong: #1a2f22;
+        --journey-done-bg: #22b358;
+        --journey-done-text: #ffffff;
+        --journey-done-border: #1a8745;
+        --journey-current-label: #b9e0c2;
+        --journey-current-who: #b7ccd6;
+        --journey-upcoming-text: #6d8290;
+        --help-border: #4a7080;
+        --help-bg: #16232a;
+        --help-text: #a8ccd8;
+        --help-hover-bg: #1f333c;
+        --popover-text: #e4e9ee;
+        --popover-border: #33414d;
+        --hover-tint: #202b36;
+        --neutral-chip-bg: #232e3a;
+        --neutral-chip-hover-bg: #2c3946;
+        --table-border: #263241;
+        --table-header-text: #c7d0d8;
+        --btn-border: #465a6c;
+        --btn-text: #c3d3e0;
+        --action-danger-border: #6b3a3a;
+        --action-danger-hover-bg: #45201f;
+        --strike-text: #7c8894;
+    }
+
+/* ONE COLOR IN THE SYSTEM IS NOT HERE, ON PURPOSE: the black background
+   behind the video player on an entry page. Video conventionally sits
+   on black regardless of the page around it, the way it does on every
+   video site, so that one is left as a plain color rather than a named
+   one here -- changing a name in this file would not reach it, because
+   nothing wires it to these names. It lives in base.html, at the video
+   player's own styling, with this same note. */

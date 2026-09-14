@@ -1,0 +1,656 @@
+/* =====================================================================
+   HOW THE SYSTEM IS LAID OUT -- SPACING, SIZES, SHAPES.
+
+   Its companion is theme.css, which holds the COLOURS. This file holds
+   everything else about how the system looks: how big text is, how much
+   space sits around things, how rounded corners are, how wide borders
+   are, how the pieces are arranged.
+
+   IT NAMES NO COLOURS. Every colour here is written as var(--something),
+   which is a reference to a name defined in theme.css. That is what
+   makes dark mode two blocks in that file rather than a second copy of
+   this one, and it is a property worth keeping: a raw colour added here
+   would look correct by day and wrong by night, with nothing failing.
+
+   MOVED OUT OF templates/base.html ON 2026-09-01, unchanged. It had
+   always lived inside the page template, which meant the system's own
+   appearance could not be handed to anybody as a file -- half of it was
+   a stylesheet and half of it was inside an HTML page. Now both halves
+   are files, and `scripts/theme_export.py` sends both.
+
+   The three @font-face rules did NOT move and are still in base.html.
+   Their URLs run through the application's asset helper, which appends a
+   cache-busting stamp taken from the font file's modification time, and
+   a plain stylesheet cannot call that helper.
+   ===================================================================== */
+
+/* Base size bumped from the 16px browser default. This predates
+       Sarabun's return (2026-08-24) and was written for Noto Sans Thai's
+       LOOPLESS (ไม่มีหัว) design, where pairs like ก/ถ/ภ and ด/ค/ต lean on
+       finer stroke differences that small sizes wash out. Sarabun is
+       looped and does not have that specific problem, but the bump is
+       kept anyway -- an 18px baseline is a reasonable size for a
+       document-reading tool regardless of which typeface draws it, and
+       shrinking back to 16px was never asked for on its own. Set as a
+       percentage, not px, so it still scales with a reader's own browser
+       font-size preference.
+
+       Everything sized in rem below keys off THIS rule, not body: rem is
+       root-relative, so putting the bump on body would have left the form
+       controls, buttons and .meta text at 16px. */
+    html { font-size: 112.5%; }  /* 18px at default browser settings */
+
+    /* Line-height matters more than point size for Thai: tone marks stack
+       above the letter and some vowels hang below, so the browser default
+       of roughly 1.2 crowds them into each other on wrapped text. */
+    /* Tinted page background rather than plain white. Set on html as well
+       as body: body is width-constrained (max-width 720px) and its box
+       only covers the content column, so colouring body alone would leave
+       white gutters either side on a wide screen. */
+    html { background: var(--bg-page); }
+    body { font-family: 'Sarabun', -apple-system, "Segoe UI", sans-serif; font-size: 1rem; line-height: 1.7; max-width: var(--page-width); margin: 2rem auto; padding: 0 1rem; color: var(--text); background: var(--bg-page); }
+    /* Headings don't want the body's 1.7 — that leading exists to keep Thai
+       diacritics off each other on wrapped body text, and at heading sizes
+       the marks already have room. 1.35 still clears them. */
+    h1, h2 { line-height: 1.35; }
+
+    /* :not(.pager) -- worklist #160. Written for the site header alone,
+       and both browse-list pagers are `<nav class="pager">`, so without
+       the exclusion every page's last row of controls carried this
+       header rule too: a faint line under the pager with the closing
+       sentence pushed below it, reading as footer text rather than the
+       list's own last word. `.pager` keeps its own rules untouched. */
+    nav:not(.pager) { margin-bottom: 1.5rem; border-bottom: 1px solid var(--border);
+          padding-bottom: 0.75rem; }
+    /* TWO ROWS, NOT ONE WRAPPING LIST (Kin, 2026-08-26). `nav` used to be
+       the flex container directly, so all seven links -- three everyone
+       gets, up to four more for a KM or HR Admin -- wrapped wherever the
+       browser's width ran out, which for an admin meant the seventh link
+       (`คำศัพท์ควบคุม`) alone on its own line, at whatever width happened
+       to leave it stranded there. `.nav-row` is now the flex container,
+       one per group, so the three universal links are ALWAYS one row and
+       the role-specific ones ALWAYS start a fresh row directly under it
+       -- decided by which group a link belongs to, not by how much
+       horizontal space is left. */
+    .nav-row { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .nav-row + .nav-row { margin-top: 0.5rem; }
+    /* RECTANGULAR, LIKE .action-link, at Kin's request (2026-08-24) --
+       these read as plain text links before this, and he wanted them
+       to look like the buttons they behave as. Same border/background/
+       radius as every other button-shaped control in this file, so a
+       reader does not learn a second visual language for "clickable"
+       just because this one happens to be a navigation link rather
+       than a form action.
+       margin-right is gone -- `gap` on each row does that job now, and
+       margin would have doubled the space padding already gives each
+       button on its own. */
+    nav a { text-decoration: none; color: var(--btn-text); font-weight: 600;
+            padding: 0.45rem 0.9rem; border-radius: 4px;
+            border: 1px solid var(--btn-border); background: var(--neutral-chip-bg); }
+    nav a:hover { background: var(--neutral-chip-hover-bg); }
+    label { display: block; margin-top: 1rem; font-weight: 600; }
+    /* font-family: inherit is load-bearing — form controls and buttons do not
+       inherit the page font by default, so without it these render Thai in the
+       browser's default UI font instead of the page font. */
+    /* EXPLICIT COLOURS, not the browser's defaults. `color-scheme`
+       above is the right signal and is now correct, but leaving the
+       fields with no colours of their own means trusting every browser
+       to derive them the same way -- and the one time that went wrong
+       it produced dark dropdowns on a light page. Stated here, they
+       follow the page's own tokens in both themes and cannot drift
+       from it. */
+    input[type=text], textarea, select { width: 100%; padding: 0.5rem; margin-top: 0.25rem; box-sizing: border-box; font-size: 1rem; font-family: inherit;
+      background: var(--bg-card); color: var(--text); border: 1px solid var(--border); border-radius: 4px; }
+    input[type=text]::placeholder, textarea::placeholder { color: var(--text-muted); }
+    textarea { min-height: 8rem; font-family: inherit; }
+    button { margin-top: 1.25rem; padding: 0.6rem 1.2rem; font-size: 1rem; font-family: inherit; font-weight: 600; background: var(--accent); color: white; border: none; border-radius: 4px; cursor: pointer; }
+    button:hover { background: var(--accent-hover); }
+    .error { background: var(--danger-bg); border: 1px solid var(--danger-border-soft); color: var(--danger-text-deep); padding: 0.75rem 1rem; border-radius: 4px; margin-top: 1rem; }
+    .note { background: var(--warn-bg); border: 1px solid var(--warn-border); color: var(--warn-text); padding: 0.75rem 1rem; border-radius: 4px; margin-top: 1rem; }
+    /* Something that HAPPENED and the reader must know about -- not a
+       refusal and not a warning about what they are about to do. Blue
+       rather than red or amber, because nothing has gone wrong: the save
+       succeeded and had a consequence worth stating. */
+    .notice { background: var(--notice-bg); border: 1px solid var(--notice-border); color: var(--notice-text); padding: 0.75rem 1rem; border-radius: 4px; margin-top: 1rem; }
+    /* The AI-exclusion mark on an entry page. Warning colours rather than
+       the plain notice ones because it states a cost, not a fact, and it
+       is shown only to the two people who can act on it. Every colour is
+       a token: a literal would look right by day and wrong at night,
+       since dark mode works by changing what the names mean. */
+    .notice-ai-excluded { background: var(--warn-bg); border-color: var(--warn-border); color: var(--warn-text); }
+    .notice-ai-excluded p { margin: 0 0 0.5rem; }
+    .notice-ai-excluded p:last-child { margin-bottom: 0; }
+    .notice-ai-excluded .notice-aside { font-size: 0.85em; opacity: 0.85; }
+    /* Soft red, deliberately lighter than .error above. .error is a hard
+       stop (the submission was rejected); this is a non-blocking warning
+       the contributor can read and then proceed past. Same colour family
+       so it reads as "attention", different weight so it doesn't read as
+       "you have been blocked". */
+    .near-dup { background: var(--near-dup-bg); border: 1px solid var(--near-dup-border); color: var(--near-dup-text); padding: 0.75rem 1rem; border-radius: 4px; margin-top: 1rem; }
+    .near-dup ul { margin: 0.35rem 0 0; padding-left: 1.25rem; }
+
+    /* Side-by-side comparison inside the near-duplicate warning. The
+       contributor's own title is shown alongside the existing entries --
+       without it they are asked to judge similarity against something
+       they can no longer see on this page. */
+    .dup-block { margin-top: 0.75rem; }
+    .dup-label { display: block; font-size: 0.85rem; font-weight: 600; opacity: 0.75; margin-bottom: 0.15rem; }
+    .dup-mine { background: var(--bg-card); border: 1px solid var(--near-dup-border); border-radius: 4px; padding: 0.5rem 0.75rem; }
+
+    /* Secondary action: same size and shape as the primary button so it
+       is obviously a button, but visually quieter so it doesn't compete
+       with the confirm action. */
+    button.secondary { background: var(--bg-card); color: var(--near-dup-text); border: 1px solid var(--secondary-btn-border); }
+    button.secondary:hover { background: var(--secondary-btn-hover-bg); }
+    .button-row { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
+    .button-row button { margin-top: 0; }
+    /* White, now that the page behind it is tinted — without this the
+       card has only a 1px border separating it from an identical
+       background and stops reading as a card at all. */
+    .result-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 6px; padding: 1rem 1.25rem; margin-top: 1rem; }
+    .result-card h2 { margin-top: 0; }
+    .meta { color: var(--text-muted); font-size: 0.9rem; }
+    .qa-block { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px dashed var(--border-soft); }
+    pre.body-text { white-space: pre-wrap; font-family: inherit; font-size: 1rem; }
+
+    /* Visual half of the uppercase-as-you-type behaviour on the employee
+       ID field. This is presentation ONLY -- text-transform does not
+       change the value that gets submitted, which is the classic trap
+       here. The value is uppercased by script in submit.html and again,
+       authoritatively, on the server. This rule exists so the letter
+       looks right the instant it is typed rather than flickering. */
+    .uppercase-input { text-transform: uppercase; }
+
+    /* --- search results ------------------------------------------- */
+
+    /* Acting-as picker. Prototype only -- there is no sign-in. It is
+       styled as an obvious control rather than blended in, because it
+       is scaffolding and should not be mistaken for a product feature. */
+    /* WHO THE PAGE IS SPEAKING AS. On every page since 2026-08-19 --
+       before that only the search and submit screens said, and every
+       other screen left a reader with no way to tell which of the ten
+       seeded people the page had been rendered for. Read-only: the two
+       pickers below are still the only way to change it. */
+    /* The home page's grouped lists. Each section is one question --
+       "what is waiting on you", "what was published lately" -- and a
+       section with nothing in it is not drawn at all, so a heading here
+       always has rows under it. */
+    .home-section { margin: 1.5rem 0; }
+    .home-section h2 { margin-bottom: 0.2rem; font-size: 1.15rem; }
+    .home-count { background: var(--chip-inflight-bg); color: var(--chip-on-solid-text); border-radius: 10px;
+                  font-size: 0.75rem; padding: 0.05rem 0.5rem;
+                  vertical-align: middle; margin-left: 0.35rem; }
+    .home-list { list-style: none; padding: 0; margin: 0.5rem 0 0 0; }
+    .home-list li { padding: 0.5rem 0; border-top: 1px solid var(--home-list-border); }
+    .home-list li .meta { display: inline; margin-left: 0.35rem; }
+    /* The date line under an entry. A block of its own so every row is
+       two lines: left inline it wrapped wherever the title happened to
+       end, which orphaned "22 ส.ค." on some rows and not others and made
+       the list read as ragged. See the comment in home.html. */
+    /* A DRAWN LINE, NOT THE "|" CHARACTER (Kin, 2026-08-26). The mark
+       exists only to show which row the second line belongs to once a
+       list has several rows stacked -- a plain typed "|" is a glyph
+       from whatever font is active, and this project has already spent
+       real time discovering that a single character's rendering cannot
+       be trusted to line up the way it looks in an editor (the "i"
+       beside a field label, the theme toggle's sun and moon). A
+       CSS-drawn border has no font to disagree about and is pixel-exact
+       by construction in both themes. */
+    .home-list li .row-second-line { display: block; margin: 0.15rem 0 0;
+                                     margin-left: 0.35rem; padding-left: 0.5rem;
+                                     border-left: 2px solid var(--border-strong);
+                                     /* THE BORDER'S LENGTH IS THE LINE'S
+                                        OWN HEIGHT, and inherited from
+                                        `body` that was 27.5px for text
+                                        whose ink is closer to 20px --
+                                        measured, not guessed, after Kin
+                                        reported the mark reading as too
+                                        long. Tightened so the line's
+                                        length tracks the text it marks
+                                        rather than body copy's roomier
+                                        spacing, which this single short
+                                        line does not need. */
+                                     line-height: 1.2; }
+    /* The asset code. Italic to separate it from the person's name now
+       that the interpunct between them is gone -- the two are different
+       kinds of thing and were only told apart by that dot. */
+    /* NO margin-right: every call site already puts its own space/·
+       after this span (home.html, search.html, entry.html) -- the
+       margin used to double up with that and widen the gap before the
+       following interpunct. Reported by Kin, 2026-08-24. */
+    .asset-code { font-style: italic; }
+    .empty-note { color: var(--text-muted-2); font-style: italic; }
+    /* The second, quieter action beside a primary submit button --
+       saving a draft rather than sending it. Visually subordinate on
+       purpose: sending is the main path and saving is the way out of
+       it, not an equal choice. */
+    .secondary-button { background: var(--bg-card); color: var(--navy-text);
+                        border: 1px solid var(--border-strong); margin-left: 0.5rem; }
+    /* The propose-a-topic box on the confirm screen. Collapsed by
+       default and visually quieter than the picker above it: the closed
+       list is the point, and a proposal box competing with it invites a
+       new topic where an existing one fits. */
+    .propose-topic { margin-top: 1rem; padding: 0.6rem 0.9rem;
+                     background: var(--propose-bg); border: 1px solid var(--panel-border);
+                     border-radius: 4px; }
+    .propose-topic summary { cursor: pointer; font-weight: 600;
+                             font-size: 0.9rem; }
+    /* A topic on an entry that has not been approved into the shared
+       list yet. Marked wherever the entry's topics are shown, because
+       "this entry is filed under something nobody has agreed to" is a
+       fact a reader needs and the tag itself cannot carry. */
+    .topic-pending { display: inline-block; font-size: 0.72rem;
+                     padding: 0 0.3rem; border-radius: 3px;
+                     background: var(--warn-bg-soft); color: var(--warn-text-soft);
+                     border: 1px solid var(--warn-border-soft); margin-left: 0.3rem; }
+    .error-box { background: var(--danger-bg); border: 1px solid var(--danger-border);
+                 color: var(--danger-text); border-radius: 4px; padding: 0.6rem 0.9rem; }
+    .whoami { background: var(--whoami-bg); border-bottom: 1px solid var(--panel-border);
+              margin: -1rem -1rem 1rem -1rem; padding: 0.45rem 1rem;
+              font-size: 0.85rem; color: var(--navy-text);
+              display: flex; flex-wrap: wrap; gap: 0.4rem 0.75rem;
+              align-items: baseline; }
+    .whoami-name { font-weight: 700; }
+    .whoami-meta { color: var(--text-muted-2); }
+    .whoami-none { color: var(--danger-text); font-weight: 600; }
+    /* The mandatory-field "*". See templates/_required_mark.html for why
+       this reuses --danger-text rather than a colour of its own. */
+    .required-mark { color: var(--danger-text); }
+    /* Pushed to the far right of the whoami bar's flex row rather than
+       given its own row -- one more line of chrome above the content on
+       every single page is a real cost the switch does not earn. */
+    /* INTEGER PIXELS, NOT rem, AND THAT IS THE WHOLE POINT (2026-08-26).
+       This was `width: 1.8rem`, which is 32.391px at this page's root
+       size and 28.8px on a browser left at the default 16px -- fractional
+       either way. A fractional box with a 1px ring means the browser has
+       to round where the 16px icon lands inside it, and the rounding does
+       not have to split evenly: Kin saw the sun a pixel left of centre
+       with a wider gap on the right, on a display this container does not
+       reproduce.
+
+       The artwork itself was NOT the problem and was checked before
+       changing anything here -- both icons are drawn symmetrically about
+       the centre of their viewBox (computed: ink spans 1.5..22.5 of 24,
+       centre 12.000, zero skew in both axes), and the SVG box measures
+       centred inside the button to 0.015px. Neither of those can be made
+       more centred; what was left was the rounding.
+
+       32/16 makes every number integral -- 8px of gap on each side, and
+       still whole device pixels at 1.5x and 2x scaling. The cost is that
+       this one control no longer grows with a reader's font-size
+       preference, which is the right trade for an icon button whose job
+       is to be a fixed-size target, and is why the SIZE is pinned here
+       while every colour still comes from a token. */
+    .theme-toggle { margin-left: auto; background: none; border: 1px solid var(--border-strong);
+                    border-radius: 999px; width: 32px; height: 32px; padding: 0;
+                    line-height: 1; cursor: pointer; margin-top: 0;
+                    display: inline-flex; align-items: center; justify-content: center;
+                    color: inherit; }
+    .theme-toggle:hover { background: var(--hover-tint); }
+    /* WHICH COPY OF THE PROTOTYPE THIS IS (Kin, 2026-09-08). Two copies
+       run on this machine and look identical; the product one is what HR
+       opens, and its label carries the moment its image was built so an
+       update can be confirmed at a glance.
+
+       IT TAKES THE `margin-left:auto` OFF THE TOGGLE rather than adding a
+       second one. Two auto margins in a flex row split the free space
+       between them, which would leave the label floating in the middle;
+       this pushes the pair to the right as one, and the sibling selector
+       means the toggle keeps its own auto whenever no label is rendered
+       -- a bare-metal run, or a copy that names no kind. */
+    .prototype-banner { margin-left: auto; font-size: 0.7rem;
+                        letter-spacing: 0.04em; color: var(--text-muted-2);
+                        white-space: nowrap; }
+    .prototype-banner + .theme-toggle { margin-left: 0.6rem; }
+    /* The icon itself, not the button -- `display:block` so the SVG has
+       no inline-element gap under its baseline, which would otherwise
+       nudge it a pixel off centre inside the circle the same way the
+       emoji's own metrics used to. */
+    .theme-toggle svg { display: block; }
+    /* A review date that has passed, or is about to. Two weights on
+       purpose: overdue is a statement that something is late, due-soon
+       is a heads-up, and giving them one colour would make the warning
+       and the failure look like the same event. */
+    .due-mark { display: inline-block; font-size: 0.75rem; padding: 0.05rem 0.4rem;
+                border-radius: 3px; margin-left: 0.35rem; white-space: nowrap; }
+    .due-overdue { background: var(--danger-bg); color: var(--due-danger-text); border: 1px solid var(--danger-border); }
+    .due-soon { background: var(--warn-bg-soft); color: var(--warn-text-soft); border: 1px solid var(--warn-border-soft); }
+    .viewer-bar { background: var(--viewer-bar-bg); border: 1px dashed var(--border-strong); border-radius: 4px;
+                  padding: 0.5rem 0.75rem; margin-bottom: 1rem; font-size: 0.9rem; }
+    .viewer-bar label { display: inline; margin: 0 0.5rem 0 0; font-weight: 600; }
+    .viewer-bar select { font-size: 0.9rem; max-width: 100%; }
+
+    .result-count { color: var(--text-muted); font-size: 0.9rem; margin: 1rem 0 0; }
+    .summary { margin: 0.5rem 0 0; }
+
+    /* Topic facets: explanation and control in the same element. The
+       count is over the whole matching set, not this page. */
+    .facets { margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 0.4rem;
+              align-items: baseline; }
+    .facet-label { font-size: 0.85rem; color: var(--text-muted); margin-right: 0.25rem; }
+    .facet { display: inline-block; background: var(--bg-card); border: 1px solid var(--facet-border);
+             border-radius: 999px; padding: 0.2rem 0.7rem; font-size: 0.85rem;
+             text-decoration: none; color: var(--facet-text); }
+    .facet:hover { background: var(--info-chip-bg); }
+    .facet-active { background: var(--facet-active-bg); border-color: var(--facet-active-bg); color: var(--chip-on-solid-text); }
+
+    /* Per-row topic attribution. Deliberately NOT styled as a warning: a
+       topic match is the cross-unit discovery feature working, not a
+       caveat about a weaker result.
+
+       .why-meaning WENT ON 2026-09-09 (#91). It styled the chip that
+       said a row was close in meaning, and Kin ruled that a person is
+       not told which half of the search produced a row, so the chip and
+       its rule went together. The words-were-found chip went the same
+       day; .why-text stays because scripts/theme_export.py's own
+       swatch page still uses the class name for an unrelated box. */
+    .why { margin: 0.6rem 0 0; display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .why-chip { font-size: 0.78rem; border-radius: 3px; padding: 0.12rem 0.5rem;
+                border: 1px solid transparent; }
+    .why-text  { background: var(--info-chip-bg); border-color: var(--why-text-border); color: var(--facet-text); }
+    .why-topic { background: var(--success-chip-bg); border-color: var(--success-border); color: var(--success-text); }
+
+    .topics { margin: 0.5rem 0 0; }
+    .topic-tag { font-size: 0.78rem; color: var(--text-muted); border: 1px solid var(--border);
+                 border-radius: 3px; padding: 0.1rem 0.4rem; margin-right: 0.25rem;
+                 display: inline-block; }
+
+    .badge { font-size: 0.78rem; border-radius: 3px; padding: 0.05rem 0.4rem; }
+    .badge-pending     { background: var(--warn-bg); border: 1px solid var(--warn-border); color: var(--warn-text); }
+    .badge-superseded  { background: var(--superseded-bg); border: 1px solid var(--border-soft);    color: var(--superseded-text); }
+    .badge-restricted  { background: var(--danger-bg-soft); border: 1px solid var(--danger-border); color: var(--danger-text); }
+    /* An approval exemption is a fact about a PERSON on the directory
+       screen, not a classification on an entry. It borrowed
+       .badge-restricted, which is the red that means "Confidential"
+       everywhere else, so that screen read as though the exempt people
+       were themselves restricted (worklist #98). Informational, from
+       tokens theme.css already defines in all three of its blocks -- a
+       new colour NAME would have to be added to each of them and would
+       come back from HR's own edit of that file. */
+    .badge-exempt      { background: var(--info-chip-bg); border: 1px solid var(--facet-border); color: var(--facet-text); }
+
+    /* Archived and Retired are findable but must not read as current
+       practice. Muted rather than hidden -- hiding them means the same
+       work gets redone next year. */
+    .result-superseded { opacity: 0.72; }
+
+    .pager { margin-top: 1.5rem; display: flex; gap: 1rem; align-items: baseline; }
+    .pager-off { color: var(--text-faint); }
+    .pager-pos { color: var(--text-muted); font-size: 0.9rem; }
+
+    /* --- submission ----------------------------------------------- */
+
+    /* Two lanes as two cards rather than one form with a toggle. They
+       require different things, and asking which kind of thing someone
+       has is clearer than a form whose required fields change under
+       them. */
+    .lane-grid { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 1rem; }
+    .lane-card { flex: 1 1 18rem; background: var(--bg-card); border: 1px solid var(--border);
+                 border-radius: 6px; padding: 1rem 1.25rem; text-decoration: none;
+                 color: inherit; display: block; }
+    .lane-card:hover { border-color: var(--facet-text); background: var(--lane-hover-bg); }
+    .lane-card h2 { margin-top: 0; }
+    .lane-need { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0; }
+
+    /* The inline video player on the entry page. Video is the one
+       attachment type that is not offered as a file: it cannot be
+       watermarked without re-encoding, so it plays here instead. */
+    .attachment-video { margin: 0.5rem 0 0.9rem; }
+    /* max-width rather than a fixed size: a portrait phone recording and
+       a 1080p screen capture both have to fit the column without one of
+       them overflowing it. */
+    /* #000, not a theme token: a video's own letterboxing is
+       conventionally black on every site regardless of page theme, and
+       theme.css has a matching note saying this color lives here and
+       is deliberately outside its list. */
+    .attachment-video video { width: 100%; max-width: 34rem;
+                              max-height: 60vh; border-radius: 6px;
+                              background: #000; display: block; }
+
+    /* WHERE AN ENTRY IS in the pipeline. See journey.py for what decides
+       the steps; nothing here does. A vertical spine rather than a
+       left-to-right one on purpose: the step count varies from three to
+       seven depending on the approval route and the content checkers,
+       and a horizontal row of seven wraps into an unreadable grid on a
+       phone -- which is where HR asked to be able to read this. */
+    .journey { border: 1px solid var(--journey-border); border-left: 3px solid var(--accent-soft);
+               border-radius: 6px; background: var(--journey-bg);
+               padding: 0.8rem 1rem; margin: 1rem 0; }
+    .journey-head { margin: 0 0 0.6rem; font-size: 0.95rem; }
+    .journey-steps { list-style: none; margin: 0; padding: 0; }
+    .journey-step { display: flex; gap: 0.6rem; align-items: flex-start;
+                    padding: 0.3rem 0; position: relative; }
+    /* The connector between markers, drawn on every step but the last so
+       the column reads as one line rather than as separate rows. */
+    .journey-step:not(:last-child)::before {
+        content: ""; position: absolute; left: 0.9rem; top: 1.6rem;
+        bottom: -0.3rem; width: 1px; background: var(--journey-line); }
+    /* SIZED UP FROM 1.4rem/0.75rem at Kin's request (2026-08-24) --
+       both connector-line offsets below are measured against THIS size,
+       not derived by formula, because the previous horizontal-line bug
+       was exactly a hand-derived offset that was wrong by a fixed
+       amount. Change this size, remeasure both connectors, do not
+       recompute them on paper. */
+    .journey-mark { flex: 0 0 1.7rem; width: 1.7rem; height: 1.7rem;
+                    border-radius: 50%; text-align: center;
+                    line-height: 1.7rem; font-size: 0.9rem;
+                    background: var(--journey-mark-bg); color: var(--journey-muted);
+                    border: 1px solid var(--journey-line); z-index: 1; }
+    .journey-body { display: flex; flex-direction: column; gap: 0.1rem; }
+    .journey-label { font-weight: 600; font-size: 0.9rem; }
+    .journey-who, .journey-when, .journey-note {
+        font-size: 0.82rem; color: var(--journey-meta-text); }
+    .journey-note { color: var(--journey-note-text); }
+
+    .journey-done .journey-mark { background: var(--journey-done-bg); color: var(--journey-done-text);
+                                  border-color: var(--journey-done-border); }
+    .journey-done .journey-label { color: var(--success-text); }
+    /* The current step is the one thing on this diagram a person is
+       looking for, so it is the only one that changes weight. */
+    .journey-current .journey-mark { background: var(--journey-current-bg); color: var(--chip-on-solid-text);
+                                     border-color: var(--journey-current-bg); }
+    .journey-current .journey-label { color: var(--journey-current-label); }
+    .journey-current .journey-who { color: var(--journey-current-who); font-weight: 600; }
+    .journey-blocked .journey-mark { background: var(--danger-bg); color: var(--due-danger-text);
+                                     border-color: var(--near-dup-border); }
+    .journey-blocked .journey-label { color: var(--due-danger-text); }
+    .journey-upcoming .journey-label { color: var(--journey-upcoming-text); font-weight: 500; }
+
+    /* HORIZONTAL ABOVE PHONE WIDTH, at Kin's request (2026-08-24) --
+       the vertical spine above is unchanged and stays what a phone
+       gets, because HR specifically asked to be able to read this
+       screen there and a horizontal row of up to seven steps is what
+       produced the unreadable grid this design avoided in the first
+       place. This is a SECOND layout for the SAME markup, not a
+       replacement: nothing above this query is touched.
+
+       700px is comfortably past a phone in portrait and comfortably
+       short of the narrowed 960px content column, so the switch lands
+       on tablet-and-up rather than exactly at the content width.
+
+       overflow-x: auto rather than wrapping to a second row, the same
+       choice this file already makes for `.detail-table` on a phone --
+       a rare seven-step entry scrolls sideways instead of wrapping into
+       the jumbled grid this design exists to avoid. */
+    @media (min-width: 700px) {
+      .journey-steps { display: flex; align-items: flex-start;
+                       overflow-x: auto; padding-bottom: 0.3rem; }
+      .journey-step { flex-direction: column; align-items: center;
+                      text-align: center; flex: 1 1 9rem; min-width: 9rem;
+                      padding: 0.3rem 0.6rem; }
+      /* The vertical connector's own pseudo-element, switched off in
+         favour of the horizontal one below -- both are ::before/::after
+         on the same element, so this cannot be "the same rule, moved":
+         a horizontal line at the vertical line's position would cut
+         across every step's text. */
+      .journey-step:not(:last-child)::before { display: none; }
+      /* top: step's own 0.3rem padding-top + half the mark's 1.4rem
+         height = 1rem to the mark's vertical CENTER. Measured wrong the
+         first time at 0.7rem -- half the mark alone, forgetting the
+         padding above it -- and it read as "close enough" until Kin
+         looked at it: off by exactly the missing 0.3rem, confirmed with
+         getBoundingClientRect rather than by eye this time. */
+      .journey-step:not(:last-child)::after {
+          content: ""; position: absolute; top: 1.2rem; left: 50%;
+          width: 100%; height: 1px; background: var(--journey-line); }
+      .journey-mark { margin-bottom: 0.5rem; }
+      .journey-body { align-items: center; }
+    }
+
+    .journey-branches { margin: 0.7rem 0 0; padding-top: 0.6rem;
+                        border-top: 1px dashed var(--journey-border);
+                        font-size: 0.8rem; color: var(--journey-muted); }
+    .journey-branch { border: 1px dashed var(--journey-line); border-radius: 3px;
+                      padding: 0.05rem 0.3rem; white-space: nowrap; }
+    .journey-branch-taken { border-style: solid; border-color: var(--due-danger-text);
+                            background: var(--danger-bg); color: var(--due-danger-text);
+                            font-weight: 600; }
+
+    /* The "i" beside a field label, and the panel of option definitions
+       it reveals. See templates/_field_help.html for why it exists and
+       why it opens on focus as well as hover.
+
+       POSITION IS ON THE WRAPPER, not the panel's parent label -- labels
+       here are display:block and full width, so anchoring to the label
+       would put the panel wherever the text happened to end.
+
+       THE LABEL IS A FLEX ROW ALIGNED ON THE BASELINE, and `baseline` is
+       the load-bearing word. `label:has(> .field-help)` scopes this to
+       exactly the five labels that render this macro; every other label
+       on the site keeps the plain `display: block` rule above.
+
+       WHY NOT `center`, WHICH IS THE OBVIOUS CHOICE AND WAS WRONG TWICE.
+       Centring aligns the two items' BOXES. The text item's box is its
+       line box, and Thai reserves generous room above the baseline for
+       tone marks and below it for vowels -- so the box's midpoint sits
+       well below the midpoint of the letters you actually see. Aligning
+       the circle to that midpoint put it visibly low. Measured in a real
+       browser: the icon's centre landed 12.1px below the centre of the
+       text's own ink. Tightening the label's line-height was tried as a
+       second attempt and moved it by 0.06px, because the mismatch was
+       never about the line box being tall -- it was about the box's
+       centre and the text's optical centre being different points.
+
+       Baseline alignment sidesteps the question entirely: it puts the
+       circle's own text baseline on the label text's baseline, which is
+       the line the eye actually reads along. Confirmed by rendering it
+       and looking, not by the numbers -- the metric that said "12.1px
+       low" is measured against the glyph bounding box and would have
+       kept reporting a large offset for an alignment that looks right.
+
+       NO line-height override here. One was added during the second
+       attempt and is gone again: it made these five labels tighter than
+       every other label on the site, for a theory that turned out not to
+       explain the symptom. */
+    label:has(> .field-help) { display: flex; align-items: baseline; }
+    .field-help { position: relative; display: inline-block;
+                  margin-left: 0.35rem; }
+    .field-help-i { font: inherit; font-size: 0.72rem; font-weight: 700;
+                    line-height: 1.15rem; width: 1.15rem; height: 1.15rem;
+                    padding: 0; border-radius: 50%; cursor: help;
+                    border: 1px solid var(--help-border); background: var(--help-bg); color: var(--help-text); }
+    .field-help-i:hover, .field-help:focus-within .field-help-i {
+        background: var(--help-hover-bg); border-color: var(--accent-soft); }
+    /* Hidden by visibility rather than display:none so it is still a
+       focus target while closed -- display:none would drop it out of the
+       tab order and :focus-within could never fire from inside it. */
+    .field-help-panel { visibility: hidden; opacity: 0; position: absolute;
+                        z-index: 20; left: 0; top: 1.5rem; width: 22rem;
+                        max-width: 80vw; padding: 0.6rem 0.75rem;
+                        font-weight: 400; font-size: 0.85rem; line-height: 1.5;
+                        background: var(--bg-card); color: var(--popover-text);
+                        border: 1px solid var(--popover-border); border-radius: 6px;
+                        box-shadow: 0 2px 10px rgba(0,0,0,0.12); }
+    .field-help:hover .field-help-panel,
+    .field-help:focus-within .field-help-panel { visibility: visible; opacity: 1; }
+    .field-help-row { display: block; }
+    .field-help-row + .field-help-row { margin-top: 0.45rem; }
+
+    /* The topic picker. Nineteen options in a flat list is what makes
+       people close the panel and accept whatever was pre-selected, so
+       each row carries its definition and the AI's picks are marked. */
+    .topic-picker { display: grid; gap: 0.35rem; margin-top: 0.5rem;
+                    padding: 0.5rem;
+                    border: 1px solid var(--border); border-radius: 6px; background: var(--bg-card); }
+    .topic-choice { display: block; font-weight: 400; margin: 0;
+                    padding: 0.4rem 0.5rem; border-radius: 4px; }
+    .topic-choice:hover { background: var(--hover-tint); }
+    .topic-choice .meta { display: block; margin-left: 1.6rem; }
+    /* Marked as "the system suggested this", not as "this is correct". */
+    .topic-suggested { background: var(--success-chip-bg); }
+    .topic-suggested:hover { background: var(--success-bg-strong); }
+
+    /* Secondary business areas. Same shape as the topic picker, shorter,
+       because there are 13 rows rather than 19 and each is one line with
+       no definition under it. A disabled row (the cap is reached) is
+       dimmed rather than hidden -- it is still a real option, just not an
+       additional one. */
+    .checkbox-panel { display: grid; gap: 0.2rem; margin-top: 0.5rem;
+                      padding: 0.5rem;
+                      border: 1px solid var(--border); border-radius: 6px; background: var(--bg-card); }
+    .checkbox-row { display: block; font-weight: 400; margin: 0;
+                    padding: 0.3rem 0.5rem; border-radius: 4px; }
+    .checkbox-row:hover { background: var(--hover-tint); }
+    .checkbox-row:has(input:disabled) { opacity: 0.45; }
+    .checkbox-panel input[type=checkbox] { width: auto; margin-right: 0.4rem; }
+
+    /* Every owning area on a search result. The primary is the first
+       chip and is marked, so "who owns this" stays answerable when three
+       units are listed. */
+    .area-chip { display: inline-block; font-size: 0.8rem; padding: 0.1rem 0.45rem;
+                 border-radius: 3px; background: var(--neutral-chip-bg); color: var(--navy-text);
+                 margin-right: 0.25rem; }
+    .area-chip-primary { background: var(--neutral-chip-hover-bg); font-weight: 600; }
+
+    /* Entry detail. Label/value rows and the change history, both plain
+       tables because both are genuinely tabular -- the history in
+       particular is what slide 17 stage 9 asks to be able to read. */
+    .detail-table { width: 100%; border-collapse: collapse; margin-top: 0.5rem;
+                    font-size: 0.92rem; }
+    .detail-table th, .detail-table td { text-align: left; vertical-align: top;
+                    padding: 0.4rem 0.6rem; border-bottom: 1px solid var(--table-border); }
+    .detail-table th { font-weight: 600; color: var(--table-header-text); white-space: nowrap; }
+    .detail-table tr:last-child th, .detail-table tr:last-child td { border-bottom: none; }
+    /* Wide on a phone: let the table scroll rather than the page. */
+    .detail-table { display: block; overflow-x: auto; }
+
+    button { font-family: inherit; font-size: 0.95rem; padding: 0.45rem 0.9rem;
+             margin-right: 0.4rem; border: 1px solid var(--btn-border); border-radius: 4px;
+             background: var(--neutral-chip-bg); color: var(--btn-text); cursor: pointer; }
+    button:hover { background: var(--neutral-chip-hover-bg); }
+
+    /* The result title is now a link, since there is somewhere to go. */
+    .result-card h2 a { color: inherit; text-decoration: none; }
+    .result-card h2 a:hover { text-decoration: underline; }
+
+    /* Actions that take an entry out of circulation. Styled apart from
+       the ordinary workflow buttons because Retire cannot be undone --
+       review.ALLOWED_TRANSITIONS["retired"] is empty -- and a one-way
+       door should not look identical to a reversible one. Both are LINKS,
+       not buttons: they go to a screen that asks for a reason. */
+    .action-link { display: inline-block; margin: 0 0.4rem 0.4rem 0;
+                   padding: 0.45rem 0.9rem; border-radius: 4px;
+                   border: 1px solid var(--btn-border); background: var(--neutral-chip-bg);
+                   color: var(--btn-text); text-decoration: none;
+                   font-size: 0.95rem; font-weight: 600; }
+    .action-link:hover { background: var(--neutral-chip-hover-bg); }
+    .action-danger { border-color: var(--action-danger-border); background: var(--danger-bg-soft); color: var(--danger-text); }
+    .action-danger:hover { background: var(--action-danger-hover-bg); }
+    button.danger { border-color: var(--btn-danger-border); background: var(--btn-danger-bg); color: var(--chip-on-solid-text); }
+    button.danger:hover { background: var(--btn-danger-hover-bg); }
+
+    /* One edit's field-by-field diff inside a history row. */
+    /* A directory row the approval route cannot use: no manager, or one
+       who is a group or has left. A tint rather than a badge, because
+       the row already carries the badge that says which problem it is. */
+    .row-attention { background: var(--warn-bg); }
+    .change-list { margin: 0; padding-left: 1.1rem; }
+    .change-list li { margin: 0.1rem 0; }
+    .change-from { color: var(--strike-text); text-decoration: line-through; }
+    .change-to { font-weight: 600; }
+    /* The four fields that decide who may READ the entry. Marked in the
+       history because widening access is the one change nothing else
+       reports -- see edits.py. */
+    .change-access { background: var(--danger-bg-soft); border: 1px solid var(--danger-border);
+                     color: var(--danger-text); font-size: 0.72rem; border-radius: 3px;
+                     padding: 0 0.3rem; margin-left: 0.3rem; }

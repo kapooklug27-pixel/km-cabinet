@@ -1,0 +1,726 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+
+  
+  <link rel="icon" href="static/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="static/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="static/apple-touch-icon.png">
+
+  
+  <script>
+    try {
+      var t = localStorage.getItem("km_theme");
+      document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+    } catch (e) {
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+  </script>
+
+  
+  <link rel="preload" as="font" type="font/ttf" crossorigin href="static/fonts/Sarabun-Regular.ttf">
+  <link rel="preload" as="font" type="font/ttf" crossorigin href="static/fonts/Sarabun-SemiBold.ttf">
+  <link rel="preload" as="font" type="font/ttf" crossorigin href="static/fonts/Sarabun-Bold.ttf">
+
+  
+  <link rel="stylesheet" href="static/theme.css">
+  
+  <link rel="stylesheet" href="static/app.css">
+  <link rel="stylesheet" href="static/modern.css">
+  <link rel="stylesheet" href="static/workspace.css">
+  <link rel="stylesheet" href="static/functional.css">
+
+  <title>ค้นหา</title>
+  <style>
+
+    /* THE COLOR AND FONT NAMES this stylesheet uses (var(--...)) are
+       defined in static/theme.css, loaded above -- that is the one file
+       meant for changing how the system looks. Nothing below this
+       point should name a raw color outside that file.
+
+       This said the one deliberate exception was the video player's
+       background, "further down, which is explained where it appears",
+       until 2026-09-09 -- this block holds only the three @font-face
+       rules below and never contained a video player. The exception is
+       real but lives in a different file: static/app.css:386-390, next
+       to the video element itself, names the #000 and explains why. */
+
+    /* Self-hosted Sarabun (SIL Open Font License, see
+       static/fonts/OFL-Sarabun.txt). This was the site's font until
+       2026-07-21, when it was swapped for Noto Sans Thai to match a
+       partner web portal this app was expected to be integrated with.
+       That integration is not happening, and switched back to Sarabun
+       2026-08-24 on Kin's own readability preference -- verified first
+       against a real concern he raised (Sarabun clipping diacritics at
+       tight line-height in Microsoft Word): rendered the site's own
+       heading (1.35) and body (1.7) line-heights with a wrapping,
+       diacritic-heavy title and found no clipping or line-to-line
+       collision, in either this font or the two alternatives compared
+       against it. Word's paragraph line-box model differs from a
+       browser's, which is the likely reason the same font can misbehave
+       there without it appearing here.
+
+       `static/fonts/NotoSansThai-*.ttf` are LEFT IN PLACE, untouched --
+       export.py registers those exact files for PDF generation and
+       nothing about this change may disturb that path (see export.py's
+       own comment on why Thai in a PDF is verified by looking, not
+       reasoning). The two font families now coexist deliberately: one
+       for the screen, one for the export.
+
+       Deliberately NOT loaded from Google Fonts or any CDN — the app must
+       render correctly with no outbound network access. Three weights only
+       (400/600/700), normal width, from the family's static/ set rather
+       than the variable font, for the same file-size and no-variation-CSS
+       reasons Noto Sans Thai was. Sarabun does carry italics, unlike Noto
+       Sans Thai, but nothing in the UI asks for one, so none are loaded.
+       font-display: swap so text is readable immediately and never
+       invisible while the font loads. */
+    @font-face {
+      font-family: 'Sarabun';
+      src: url("/static/fonts/Sarabun-Regular.ttf?v=1787538704") format('truetype');
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Sarabun';
+      src: url("/static/fonts/Sarabun-SemiBold.ttf?v=1787538704") format('truetype');
+      font-weight: 600;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Sarabun';
+      src: url("/static/fonts/Sarabun-Bold.ttf?v=1787538704") format('truetype');
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+  </style>
+</head>
+<body><div style="position:relative;z-index:50;margin:-2rem -1rem 1.75rem;background:#14456f;color:#fff;padding:12px 18px;font-size:14px;line-height:1.6;font-family:Sarabun,sans-serif">ภาพหน้าจอของระบบ KM บันทึกเมื่อ 14 กันยายน 2569 &nbsp;—&nbsp; สำเนาแบบคงที่ ปุ่มและช่องค้นหาไม่ทำงาน &nbsp;·&nbsp; <a href="index.html" style="color:#cfe3f7;text-decoration:underline">สารบัญของสำเนา</a></div>
+  
+  <div class="whoami">
+    
+    <span><span class="whoami-meta">ผู้ใช้:</span>
+      <span class="whoami-name">กมลชนก แสงทอง</span></span>
+    
+    <span class="whoami-meta">องค์กรและกลยุทธ์</span>
+    
+    <span class="whoami-meta">บทบาท: ผู้ดูแลระบบฐานข้อมูลความรู้</span>
+    
+    
+    
+    
+    
+    <span class="prototype-banner">PRODUCT PROTOTYPE [UPDATED: 14/9/26; 2:30 PM BKK]</span>
+    
+    <button type="button" class="theme-toggle" id="theme-toggle"
+            style="visibility:hidden" aria-label="สลับเป็นโหมดมืด"
+            title="สลับโหมดสี"></button>
+  </div>
+  
+  <nav>
+    
+    <div class="nav-row">
+      
+      
+      <a href="index.html">🏠 หน้าแรก</a>
+      <a href="#" data-inactive="1" style="cursor:default">➕ เพิ่มความรู้</a>
+      <a href="search-sentence.html">🔎 ค้นหาความรู้</a>
+    </div>
+    
+    <div class="nav-row">
+      
+      
+      <a href="worklist.html">งานที่ต้องดำเนินการ</a>
+      
+      <a href="access-log.html">บันทึกการเข้าดู</a>
+      
+      <a href="export-log.html">บันทึกการนำออก</a>
+      
+      
+      <a href="#" data-inactive="1" style="cursor:default">ข้อมูลบุคลากร</a>
+      
+      <a href="vocabulary.html">คำศัพท์ควบคุม</a>
+      
+    </div>
+    
+  </nav>
+  
+<h1>ค้นหาความรู้</h1>
+
+
+<form method="get" action="#" onsubmit="return false" class="viewer-bar">
+  <label for="as">กำลังใช้งานในนาม</label>
+  <select id="as" name="as" onchange="this.form.submit()">
+    
+    <option value="1" >
+      สมชาย ใจดี · HR · ผู้ดูแลข้อมูลบุคลากร
+    </option>
+    
+    <option value="2" >
+      วิภาดา มีสุข · TECH · คุ้มครองข้อมูลและความมั่นคงปลอดภัย
+    </option>
+    
+    <option value="3" >
+      ธนพล ศรีวิไล · RLC · ผู้ตรวจสอบสายงาน, ความเสี่ยง กฎหมาย และกำกับดูแล
+    </option>
+    
+    <option value="4" >
+      อรุณี ทองแท้ · FIN
+    </option>
+    
+    <option value="5" >
+      ประเสริฐ กิจเจริญ · SAF
+    </option>
+    
+    <option value="6" selected>
+      กมลชนก แสงทอง · COR · ผู้ดูแลระบบฐานข้อมูลความรู้
+    </option>
+    
+    <option value="7" >
+      ณัฐวุฒิ พงษ์ไพบูลย์ · COR · ผู้อนุมัติ
+    </option>
+    
+    <option value="9" >
+      สุริยา ก้าวหน้า · PSC
+    </option>
+    
+    <option value="10" >
+      ชนิดา บริการดี · CUS
+    </option>
+    
+  </select>
+  <input type="hidden" name="q" value="พนักงานลาป่วยต้องแจ้งใครบ้าง">
+  <noscript><button type="submit">เปลี่ยน</button></noscript>
+</form>
+
+<form method="get" action="#" onsubmit="return false">
+  <label for="q">ใส่คำค้นหา</label>
+  
+  <input type="text" id="q" name="q" value="พนักงานลาป่วยต้องแจ้งใครบ้าง" maxlength="500"
+         placeholder="เช่น &quot;ความปลอดภัย&quot; หรือ &quot;ทุจริต ค่าเดินทาง&quot;">
+  <input type="hidden" name="as" value="6">
+  <button type="submit">ค้นหา</button>
+</form>
+
+
+
+
+
+
+  
+
+  
+
+  
+  
+
+  
+  
+  <div class="facets">
+    <span class="facet-label">คำค้นหาตรงกับหัวข้อ</span>
+    
+      
+      <a class="facet"
+         href="search-sentence.html"
+         >ความผูกพันของพนักงาน (8)</a>
+      
+    
+  </div>
+  
+
+  
+  
+  <p class="result-count">
+    
+    แสดง 1–10 จาก 39 รายการ
+    
+  </p>
+
+  
+  <div class="result-card">
+    
+    
+    <h2>
+      <a href="#" data-inactive="1" style="cursor:default"
+         id="entry-976">นโยบายการลาป่วยและการลากิจสำหรับพนักงานประจำ</a>
+    </h2>
+    <p class="meta">Sick and Personal Leave Policy</p>
+
+    
+    <p class="meta">
+      KM-POL-00125 · 
+      นโยบาย มาตรฐาน และแนวทาง ·
+      <span class="area-chip area-chip-primary"
+        title="หน่วยงานเจ้าของเรื่องหลัก">ทรัพยากรบุคคล</span>
+      · ประเสริฐ กิจเจริญ
+      
+      
+      
+      
+    </p>
+
+    <p class="summary">ระเบียบว่าด้วยสิทธิการลาป่วยและลากิจของพนักงานประจำ รวมเงื่อนไขการรับรองแพทย์และการหักเงินเดือน</p>
+
+    
+    
+
+    
+    
+
+    
+    <p class="topics"><span class="topic-tag">กฎหมายและการกำกับดูแล</span><span class="topic-tag">การประเมินผลและค่าตอบแทน</span>
+    </p>
+    
+  </div>
+  
+  <div class="result-card">
+    
+    
+    <h2>
+      <a href="#" data-inactive="1" style="cursor:default"
+         id="entry-1655">หัวหน้างานตรวจสอบวันลาป่วยสะสมของลูกทีมอย่างไรไม่ให้พลาด</a>
+    </h2>
+    
+
+    
+    <p class="meta">
+      KM-SOP-00428 · 
+      กระบวนการ ขั้นตอน และวิธีปฏิบัติงาน ·
+      <span class="area-chip area-chip-primary"
+        title="หน่วยงานเจ้าของเรื่องหลัก">ทรัพยากรบุคคล</span>
+      · กมลชนก แสงทอง
+      
+      
+      
+        · <span class="badge badge-restricted">ภายใน - เฉพาะบางหน่วยงาน</span>
+      
+      
+    </p>
+
+    <p class="summary">แนวทางที่หัวหน้างานใช้ติดตามวันลาป่วยของลูกทีมแต่ละคน ก่อนวันลาป่วยสะสมเกินสิทธิรายปี</p>
+
+    
+    
+
+    
+    
+
+    
+    <p class="topics"><span class="topic-tag">การประเมินผลและค่าตอบแทน</span>
+    </p>
+    
+  </div>
+  
+  <div class="result-card">
+    
+    
+    <h2>
+      <a href="#" data-inactive="1" style="cursor:default"
+         id="entry-1537">สิทธิการลาหลากประเภทและวิธีการยื่นขอ</a>
+    </h2>
+    <p class="meta">Types of Leave and How to Apply</p>
+
+    
+    <p class="meta">
+      KM-POL-00262 · 
+      นโยบาย มาตรฐาน และแนวทาง ·
+      <span class="area-chip area-chip-primary"
+        title="หน่วยงานเจ้าของเรื่องหลัก">ทรัพยากรบุคคล</span>
+      · สุริยา ก้าวหน้า
+      
+      
+      
+      
+    </p>
+
+    <p class="summary">รายละเอียดการลาทั้ง 6 ประเภท ได้แก่ ลาป่วย ลาวิวาห์ ลากิจ ลาคลอด และลาไปเลือกตั้ง</p>
+
+    
+    
+
+    
+    
+
+    
+    <p class="topics"><span class="topic-tag">การประเมินผลและค่าตอบแทน</span><span class="topic-tag">ไม่มีหัวข้อที่เกี่ยวข้อง</span>
+    </p>
+    
+  </div>
+  
+  <div class="result-card">
+    
+    
+    <h2>
+      <a href="#" data-inactive="1" style="cursor:default"
+         id="entry-1436">รายงานสถิติการใช้สิทธิลาป่วยและลากิจเปรียบเทียบรายปี</a>
+    </h2>
+    
+
+    
+    <p class="meta">
+      KM-INS-00146 · 
+      ข้อมูล รายงาน และข้อค้นพบ ·
+      <span class="area-chip area-chip-primary"
+        title="หน่วยงานเจ้าของเรื่องหลัก">ทรัพยากรบุคคล</span>
+      · ประเสริฐ กิจเจริญ
+      
+      
+      
+      
+    </p>
+
+    <p class="summary">เปรียบเทียบจำนวนวันลาป่วยและลากิจเฉลี่ยต่อคนย้อนหลัง 3 ปีแยกตามฝ่ายเพื่อดูแนวโน้ม</p>
+
+    
+    
+
+    
+    
+    <p class="why">
+      
+      <span class="why-chip why-topic">พบจากหัวข้อ · ความผูกพันของพนักงาน</span>
+      
+    </p>
+    
+
+    
+    <p class="topics"><span class="topic-tag">ความผูกพันของพนักงาน</span>
+    </p>
+    
+  </div>
+  
+  <div class="result-card">
+    
+    
+    <h2>
+      <a href="#" data-inactive="1" style="cursor:default"
+         id="entry-1439">รายงานสรุปการใช้สิทธิวันลาและสวัสดิการพนักงาน ปี 2568</a>
+    </h2>
+    
+
+    
+    <p class="meta">
+      KM-INS-00149 · 
+      ข้อมูล รายงาน และข้อค้นพบ ·
+      <span class="area-chip area-chip-primary"
+        title="หน่วยงานเจ้าของเรื่องหลัก">ทรัพยากรบุคคล</span>
+      · กมลชนก แสงทอง
+      
+      
+      
+      
+    </p>
+
+    <p class="summary">สรุปสถิติการใช้วันลาทุกประเภทและต้นทุนสวัสดิการรายหัวของทั้งบริษัท พร้อมข้อสังเกตแนวโน้มเทียบกับสองปีก่อนหน้า</p>
+
+    
+    
+
+    
+    
+
+    
+    <p class="topics"><span class="topic-tag">ข้อมูลและการวิเคราะห์</span><span class="topic-tag">การประเมินผลและค่าตอบแทน</span>
+    </p>
+    
+  </div>
+  
+  <div class="result-card">
+    
+    
+    <h2>
+      <a href="#" data-inactive="1" style="cursor:default"
+         id="entry-517">ขั้นตอนการเปลี่ยนกะฉุกเฉินเมื่อเจ้าหน้าที่ลาป่วยกะทันหัน</a>
+    </h2>
+    <p class="meta">Emergency Shift Coverage Procedure</p>
+
+    
+    <p class="meta">
+      KM-SOP-00272 · 
+      กระบวนการ ขั้นตอน และวิธีปฏิบัติงาน ·
+      <span class="area-chip area-chip-primary"
+        title="หน่วยงานเจ้าของเรื่องหลัก">บริการลูกค้า</span>
+      · สมชาย ใจดี
+      
+      
+      
+      
+    </p>
+
+    <p class="summary">ขั้นตอนจัดหาเจ้าหน้าที่ทดแทนเมื่อพนักงานคอลเซ็นเตอร์แจ้งลาป่วยกะทันหันก่อนเริ่มกะไม่เกิน 2 ชั่วโมง</p>
+
+    
+    
+
+    
+    
+
+    
+    <p class="topics"><span class="topic-tag">ต้นทุนและประสิทธิภาพ</span><span class="topic-tag">ประสบการณ์ลูกค้า</span>
+    </p>
+    
+  </div>
+  
+  <div class="result-card">
+    
+    
+    <h2>
+      <a href="#" data-inactive="1" style="cursor:default"
+         id="entry-1345">ระเบียบการลาคลอดบุตรและการลาของคู่สมรสเพื่อดูแลบุตร</a>
+    </h2>
+    <p class="meta">Maternity and Spouse Parental Leave Regulation</p>
+
+    
+    <p class="meta">
+      KM-POL-00252 · 
+      นโยบาย มาตรฐาน และแนวทาง ·
+      <span class="area-chip area-chip-primary"
+        title="หน่วยงานเจ้าของเรื่องหลัก">ทรัพยากรบุคคล</span><span class="area-chip"
+        >การขายและการตลาด</span><span class="area-chip"
+        >พัฒนาธุรกิจ</span><span class="area-chip"
+        >จัดซื้อและห่วงโซ่อุปทาน</span>
+      · ณัฐวุฒิ พงษ์ไพบูลย์
+      
+      
+      
+        · <span class="badge badge-restricted">ภายใน - เฉพาะบางหน่วยงาน</span>
+      
+      
+    </p>
+
+    <p class="summary">กำหนดสิทธิวันลาคลอด สิทธิลาของคู่สมรส เอกสารที่ต้องยื่น และกำหนดเวลายื่นเรื่องต่อฝ่ายทรัพยากรบุคคลก่อนวันเริ่มลา</p>
+
+    
+    
+
+    
+    
+    <p class="why">
+      
+      <span class="why-chip why-topic">พบจากหัวข้อ · ความผูกพันของพนักงาน</span>
+      
+    </p>
+    
+
+    
+    <p class="topics"><span class="topic-tag">การประเมินผลและค่าตอบแทน</span><span class="topic-tag">ความผูกพันของพนักงาน</span>
+    </p>
+    
+  </div>
+  
+  <div class="result-card">
+    
+    
+    <h2>
+      <a href="#" data-inactive="1" style="cursor:default"
+         id="entry-1799">แนวทางมอบอำนาจชั่วคราวระหว่างผู้บริหารลาพักร้อนหรือลาป่วยยาว</a>
+    </h2>
+    <p class="meta">Temporary Delegation of Authority — Extended Leave</p>
+
+    
+    <p class="meta">
+      KM-SOP-00456 · 
+      กระบวนการ ขั้นตอน และวิธีปฏิบัติงาน ·
+      <span class="area-chip area-chip-primary"
+        title="หน่วยงานเจ้าของเรื่องหลัก">องค์กรและกลยุทธ์</span><span class="area-chip"
+        >ความเสี่ยง กฎหมาย และกำกับดูแล</span>
+      · สุริยา ก้าวหน้า
+      
+      
+      
+        · <span class="badge badge-restricted">ภายใน - เฉพาะบางหน่วยงาน</span>
+      
+      
+    </p>
+
+    <p class="summary">หลักเกณฑ์และแบบฟอร์มที่ผู้บริหารใช้มอบอำนาจอนุมัติให้ผู้อื่นปฏิบัติหน้าที่แทนชั่วคราวระหว่างลาพักร้อนหรือลาป่วยตั้งแต่ 5 วันขึ้นไป</p>
+
+    
+    
+
+    
+    
+
+    
+    <p class="topics"><span class="topic-tag">กฎหมายและการกำกับดูแล</span>
+    </p>
+    
+  </div>
+  
+  <div class="result-card">
+    
+    
+    <h2>
+      <a href="#" data-inactive="1" style="cursor:default"
+         id="entry-1073">บทเรียนจากกรณีปลอมลายเซ็นอนุมัติใบสำคัญจ่ายในหน่วยงานสาขา</a>
+    </h2>
+    
+
+    
+    <p class="meta">
+      KM-LL-00068 · 
+      บทเรียนและกรณีทบทวน ·
+      <span class="area-chip area-chip-primary"
+        title="หน่วยงานเจ้าของเรื่องหลัก">การเงินและบัญชี</span><span class="area-chip"
+        >ความเสี่ยง กฎหมาย และกำกับดูแล</span><span class="area-chip"
+        >อื่นๆ</span>
+      · ธนพล ศรีวิไล
+      
+      
+      
+      
+    </p>
+
+    <p class="summary">สรุปเหตุการณ์และบทเรียนจากกรณีพนักงานสาขาปลอมลายเซ็นหัวหน้างานเพื่ออนุมัติใบสำคัญจ่ายให้ตนเองในช่วงที่หัวหน้างานลาป่วยยาว</p>
+
+    
+    
+
+    
+    
+
+    
+    <p class="topics"><span class="topic-tag">ทุจริตและคอร์รัปชัน</span><span class="topic-tag">การบริหารความเสี่ยง</span>
+    </p>
+    
+  </div>
+  
+  <div class="result-card">
+    
+    
+    <h2>
+      <a href="#" data-inactive="1" style="cursor:default"
+         id="entry-1937">แบบฟอร์ม HR-020 ขอลาคลอดและการคำนวณสิทธิประโยชน์ที่ได้รับ</a>
+    </h2>
+    <p class="meta">Maternity Leave Form and Benefit Calculation</p>
+
+    
+    <p class="meta">
+      KM-TOOL-00154 · 
+      แบบฟอร์ม เครื่องมือ และตัวช่วยทำงาน ·
+      <span class="area-chip area-chip-primary"
+        title="หน่วยงานเจ้าของเรื่องหลัก">ทรัพยากรบุคคล</span><span class="area-chip"
+        >การขายและการตลาด</span><span class="area-chip"
+        >บริการลูกค้า</span><span class="area-chip"
+        >จัดซื้อและห่วงโซ่อุปทาน</span>
+      · กมลชนก แสงทอง
+      
+      
+      
+      
+    </p>
+
+    <p class="summary">คำอธิบายการกรอกแบบฟอร์มขอลาคลอด พร้อมตารางคำนวณสิทธิเงินเดือนและประกันสังคมที่ได้รับระหว่างลา</p>
+
+    
+    
+
+    
+    
+
+    
+    <p class="topics"><span class="topic-tag">กฎหมายและการกำกับดูแล</span><span class="topic-tag">การประเมินผลและค่าตอบแทน</span>
+    </p>
+    
+  </div>
+  
+
+  
+  <nav class="pager">
+    <span class="pager-off">‹ ก่อนหน้า</span>
+    <span class="pager-pos">หน้า 1 จาก 4</span>
+    
+      <a href="search-sentence.html">ถัดไป ›</a>
+    
+  </nav>
+  
+
+  
+
+
+  
+  <script>
+    (function () {
+      var KEY = "km_theme";
+      var btn = document.getElementById("theme-toggle");
+
+      // INLINE SVG, NOT THE EMOJI CHARACTERS THEY REPLACE (2026-08-26).
+      // The sun emoji's own ink is off-centre in its character box --
+      // measured on a canvas at 12% right of centre -- and that is a
+      // property of the emoji FONT, which differs by platform. A
+      // translateX() nudge nulled it out in one environment and did
+      // nothing in another (confirmed: this container's font centred
+      // the glyph correctly, so the nudge had nothing to correct and
+      // Kin's browser still showed it off, on a different font
+      // entirely). Nothing tunable fixes a per-font problem.
+      //
+      // Both paths are drawn on this file's own 24x24 grid, so both are
+      // centred by CONSTRUCTION rather than by measuring somebody's
+      // font and hoping the next platform agrees. `stroke="currentColor"`
+      // instead of `fill`, matching `.theme-toggle`'s `color: inherit` --
+      // no new colour variable, and the icon recolours itself for free
+      // wherever the button's text colour already changes.
+      var SUN_SVG =
+        '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" ' +
+        'stroke="currentColor" stroke-width="2" stroke-linecap="round" ' +
+        'aria-hidden="true" focusable="false">' +
+        '<circle cx="12" cy="12" r="4.5"></circle>' +
+        '<line x1="12" y1="2.5" x2="12" y2="4.5"></line>' +
+        '<line x1="12" y1="19.5" x2="12" y2="21.5"></line>' +
+        '<line x1="4.93" y1="4.93" x2="6.34" y2="6.34"></line>' +
+        '<line x1="17.66" y1="17.66" x2="19.07" y2="19.07"></line>' +
+        '<line x1="2.5" y1="12" x2="4.5" y2="12"></line>' +
+        '<line x1="19.5" y1="12" x2="21.5" y2="12"></line>' +
+        '<line x1="4.93" y1="19.07" x2="6.34" y2="17.66"></line>' +
+        '<line x1="17.66" y1="6.34" x2="19.07" y2="4.93"></line>' +
+        '</svg>';
+      // A CIRCLE WITH A BITE, not the emoji's crescent, and drawn as a
+      // filled shape rather than an outline -- an outlined crescent is
+      // two thin arcs with nothing behind them and reads as a sliver at
+      // 16px. The bite circle is offset up-and-right by the same amount
+      // in both axes, which is what keeps the remaining crescent's own
+      // visual weight centred in the 24x24 grid rather than pushed to
+      // one side.
+      var MOON_SVG =
+        '<svg viewBox="0 0 24 24" width="16" height="16" ' +
+        'aria-hidden="true" focusable="false">' +
+        '<mask id="km-moon-bite"><rect width="24" height="24" ' +
+        'fill="white"></rect><circle cx="15" cy="9" r="7" ' +
+        'fill="black"></circle></mask>' +
+        '<circle cx="12" cy="12" r="8.5" fill="currentColor" ' +
+        'mask="url(#km-moon-bite)"></circle>' +
+        '</svg>';
+
+      function stored() {
+        try { return localStorage.getItem(KEY); } catch (e) { return null; }
+      }
+      function effective() {
+        return stored() === "dark" ? "dark" : "light";
+      }
+      function paint() {
+        var mode = effective();
+        var isSun = mode === "dark";
+        // Shows what clicking WOULD switch to -- the opposite of now.
+        btn.innerHTML = isSun ? SUN_SVG : MOON_SVG;
+        btn.setAttribute("aria-label",
+          mode === "dark" ? "สลับเป็นโหมดสว่าง" : "สลับเป็นโหมดมืด");
+        btn.style.visibility = "visible";
+      }
+      btn.addEventListener("click", function () {
+        var next = effective() === "dark" ? "light" : "dark";
+        document.documentElement.setAttribute("data-theme", next);
+        try { localStorage.setItem(KEY, next); } catch (e) {}
+        paint();
+      });
+      paint();
+    })();
+  </script>
+  <script src="static/app.js"></script>
+  <script src="static/workspace.js"></script>
+  <script src="static/functional.js"></script>
+</body>
+</html>

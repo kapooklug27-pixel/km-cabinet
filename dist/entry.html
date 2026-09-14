@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+
+  
+  <link rel="icon" href="static/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="static/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="static/apple-touch-icon.png">
+
+  
+  <script>
+    try {
+      var t = localStorage.getItem("km_theme");
+      document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+    } catch (e) {
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+  </script>
+
+  
+  <link rel="preload" as="font" type="font/ttf" crossorigin href="static/fonts/Sarabun-Regular.ttf">
+  <link rel="preload" as="font" type="font/ttf" crossorigin href="static/fonts/Sarabun-SemiBold.ttf">
+  <link rel="preload" as="font" type="font/ttf" crossorigin href="static/fonts/Sarabun-Bold.ttf">
+
+  
+  <link rel="stylesheet" href="static/theme.css">
+  
+  <link rel="stylesheet" href="static/app.css">
+  <link rel="stylesheet" href="static/modern.css">
+  <link rel="stylesheet" href="static/workspace.css">
+  <link rel="stylesheet" href="static/functional.css">
+
+  <title>ขั้นตอนการตรวจสอบใบสำคัญจ่ายที่ผิดปกติ</title>
+  <style>
+
+    /* THE COLOR AND FONT NAMES this stylesheet uses (var(--...)) are
+       defined in static/theme.css, loaded above -- that is the one file
+       meant for changing how the system looks. Nothing below this
+       point should name a raw color outside that file.
+
+       This said the one deliberate exception was the video player's
+       background, "further down, which is explained where it appears",
+       until 2026-09-09 -- this block holds only the three @font-face
+       rules below and never contained a video player. The exception is
+       real but lives in a different file: static/app.css:386-390, next
+       to the video element itself, names the #000 and explains why. */
+
+    /* Self-hosted Sarabun (SIL Open Font License, see
+       static/fonts/OFL-Sarabun.txt). This was the site's font until
+       2026-07-21, when it was swapped for Noto Sans Thai to match a
+       partner web portal this app was expected to be integrated with.
+       That integration is not happening, and switched back to Sarabun
+       2026-08-24 on Kin's own readability preference -- verified first
+       against a real concern he raised (Sarabun clipping diacritics at
+       tight line-height in Microsoft Word): rendered the site's own
+       heading (1.35) and body (1.7) line-heights with a wrapping,
+       diacritic-heavy title and found no clipping or line-to-line
+       collision, in either this font or the two alternatives compared
+       against it. Word's paragraph line-box model differs from a
+       browser's, which is the likely reason the same font can misbehave
+       there without it appearing here.
+
+       `static/fonts/NotoSansThai-*.ttf` are LEFT IN PLACE, untouched --
+       export.py registers those exact files for PDF generation and
+       nothing about this change may disturb that path (see export.py's
+       own comment on why Thai in a PDF is verified by looking, not
+       reasoning). The two font families now coexist deliberately: one
+       for the screen, one for the export.
+
+       Deliberately NOT loaded from Google Fonts or any CDN — the app must
+       render correctly with no outbound network access. Three weights only
+       (400/600/700), normal width, from the family's static/ set rather
+       than the variable font, for the same file-size and no-variation-CSS
+       reasons Noto Sans Thai was. Sarabun does carry italics, unlike Noto
+       Sans Thai, but nothing in the UI asks for one, so none are loaded.
+       font-display: swap so text is readable immediately and never
+       invisible while the font loads. */
+    @font-face {
+      font-family: 'Sarabun';
+      src: url("/static/fonts/Sarabun-Regular.ttf?v=1787538704") format('truetype');
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Sarabun';
+      src: url("/static/fonts/Sarabun-SemiBold.ttf?v=1787538704") format('truetype');
+      font-weight: 600;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Sarabun';
+      src: url("/static/fonts/Sarabun-Bold.ttf?v=1787538704") format('truetype');
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+  </style>
+</head>
+<body><div style="position:relative;z-index:50;margin:-2rem -1rem 1.75rem;background:#14456f;color:#fff;padding:12px 18px;font-size:14px;line-height:1.6;font-family:Sarabun,sans-serif">ภาพหน้าจอของระบบ KM บันทึกเมื่อ 14 กันยายน 2569 &nbsp;—&nbsp; สำเนาแบบคงที่ ปุ่มและช่องค้นหาไม่ทำงาน &nbsp;·&nbsp; <a href="index.html" style="color:#cfe3f7;text-decoration:underline">สารบัญของสำเนา</a></div>
+  
+  <div class="whoami">
+    
+    <span><span class="whoami-meta">ผู้ใช้:</span>
+      <span class="whoami-name">กมลชนก แสงทอง</span></span>
+    
+    <span class="whoami-meta">องค์กรและกลยุทธ์</span>
+    
+    <span class="whoami-meta">บทบาท: ผู้ดูแลระบบฐานข้อมูลความรู้</span>
+    
+    
+    
+    
+    
+    <span class="prototype-banner">PRODUCT PROTOTYPE [UPDATED: 14/9/26; 2:30 PM BKK]</span>
+    
+    <button type="button" class="theme-toggle" id="theme-toggle"
+            style="visibility:hidden" aria-label="สลับเป็นโหมดมืด"
+            title="สลับโหมดสี"></button>
+  </div>
+  
+  <nav>
+    
+    <div class="nav-row">
+      
+      
+      <a href="index.html">🏠 หน้าแรก</a>
+      <a href="#" data-inactive="1" style="cursor:default">➕ เพิ่มความรู้</a>
+      <a href="search-sentence.html">🔎 ค้นหาความรู้</a>
+    </div>
+    
+    <div class="nav-row">
+      
+      
+      <a href="worklist.html">งานที่ต้องดำเนินการ</a>
+      
+      <a href="access-log.html">บันทึกการเข้าดู</a>
+      
+      <a href="export-log.html">บันทึกการนำออก</a>
+      
+      
+      <a href="#" data-inactive="1" style="cursor:default">ข้อมูลบุคลากร</a>
+      
+      <a href="vocabulary.html">คำศัพท์ควบคุม</a>
+      
+    </div>
+    
+  </nav>
+  
+
+
+
+<p class="meta"><a href="search-sentence.html">← กลับไปหน้าค้นหา</a>
+  · <a href="#" data-inactive="1" style="cursor:default">ส่งออกรายการนี้เป็น PDF (มีลายน้ำ)</a></p>
+
+
+
+
+
+
+
+<h1>ขั้นตอนการตรวจสอบใบสำคัญจ่ายที่ผิดปกติ</h1>
+
+
+<p class="meta">
+  
+  
+    <span class="asset-code">KM-SOP-00001</span> ·
+  
+  กระบวนการ ขั้นตอน และวิธีปฏิบัติงาน · v1.0
+  
+  
+  
+</p>
+
+
+
+<div class="journey">
+  <p class="journey-head">
+    
+      ดำเนินการครบทุกขั้นตอนแล้ว
+    
+  </p>
+
+  <ol class="journey-steps">
+    
+    <li class="journey-step journey-done">
+      <span class="journey-mark" aria-hidden="true">✓</span>
+      <span class="journey-body">
+        <span class="journey-label">ส่งเรื่อง</span>
+        
+        <span class="journey-who">อรุณี ทองแท้ · ผู้ส่งเรื่อง</span>
+        
+        <span class="journey-when">31 ส.ค. 2569 (2026) 11:09 AM</span>
+        
+      </span>
+    </li>
+    
+    <li class="journey-step journey-done">
+      <span class="journey-mark" aria-hidden="true">✓</span>
+      <span class="journey-body">
+        <span class="journey-label">อนุมัติ</span>
+        
+        <span class="journey-who">ณัฐวุฒิ พงษ์ไพบูลย์ · ผู้อนุมัติ</span>
+        
+        <span class="journey-when">31 ส.ค. 2569 (2026) 11:09 AM</span>
+        
+      </span>
+    </li>
+    
+    <li class="journey-step journey-done">
+      <span class="journey-mark" aria-hidden="true">✓</span>
+      <span class="journey-body">
+        <span class="journey-label">เผยแพร่</span>
+        
+        <span class="journey-who">ผู้ดูแลระบบความรู้</span>
+        
+        
+        
+      </span>
+    </li>
+    
+  </ol>
+
+  
+  <p class="journey-branches">
+    ระหว่างทาง เรื่องอาจ
+    <span class="journey-branch">ถูกส่งกลับให้แก้ไข</span>
+    หรือ
+    <span class="journey-branch">ไม่อนุมัติ</span>
+    และหลังเผยแพร่แล้วอาจ
+    <span class="journey-branch">เก็บเป็นประวัติ</span>
+    หรือ
+    <span class="journey-branch">ยุติการใช้งาน</span>
+  </p>
+</div>
+
+
+
+
+<div class="result-card">
+  <p class="summary">ขั้นตอนที่เจ้าหน้าที่บัญชีต้องทำเมื่อพบใบสำคัญจ่ายที่มีลักษณะผิดปกติ ตั้งแต่การตั้งข้อสังเกตจนถึงการส่งต่อให้หน่วยงานตรวจสอบ</p>
+
+  <p class="meta">
+    หน่วยงาน:
+    <span class="area-chip area-chip-primary"
+      title="หน่วยงานเจ้าของเรื่องหลัก">การเงินและบัญชี</span>
+    · เจ้าของเนื้อหา: อรุณี ทองแท้ (ฝ่ายการเงิน - งานบัญชีทั่วไป)
+  </p>
+
+  
+  <p class="why">
+    
+    <span class="why-chip why-topic">ทุจริตและคอร์รัปชัน</span>
+    
+    <span class="why-chip why-topic">กฎหมายและการกำกับดูแล</span>
+    
+  </p>
+  
+</div>
+
+<h2>ปัญหา / วัตถุประสงค์</h2>
+<p>เจ้าหน้าที่บัญชีมักไม่แน่ใจว่าควรทักท้วงเมื่อใด และควรส่งเรื่องให้ใคร ทำให้รายการที่น่าสงสัยผ่านไปโดยไม่มีการบันทึก</p>
+
+<h2>วิธีใช้และประโยชน์</h2>
+<p>เจ้าหน้าที่บัญชีทุกคนใช้เป็นขั้นตอนอ้างอิง ลดการตัดสินใจตามดุลยพินิจส่วนบุคคล</p>
+
+
+<h2>เนื้อหา</h2>
+
+
+<p>เกณฑ์ตั้งข้อสังเกตหกข้อ ได้แก่ ยอดใกล้เคียงวงเงินอนุมัติของผู้อนุมัติคนเดียว ผู้ขายรายใหม่ที่ไม่มีประวัติ เลขบัญชีปลายทางซ้ำกับพนักงาน ใบเสร็จไม่มีเลขประจำตัวผู้เสียภาษี วันที่เอกสารย้อนหลังเกินเก้าสิบวัน และรายการที่ถูกยกเลิกแล้วยื่นใหม่</p>
+
+<p>เมื่อพบข้อใดข้อหนึ่ง ให้บันทึกข้อสังเกตในระบบ พักรายการไว้ และแจ้งหัวหน้างานภายในวันทำการถัดไป ห้ามติดต่อผู้ยื่นเอกสารโดยตรงเพื่อสอบถาม</p>
+
+
+
+
+
+<h2>การกำกับดูแล</h2>
+<table class="detail-table">
+  <tr><th>ระดับการเข้าถึง</th><td>ภายใน - พนักงานทุกคน</td></tr>
+  <tr><th>ระดับข้อมูล</th><td>ไม่มีข้อมูลส่วนบุคคลหรือข้อมูลลับทางธุรกิจ</td></tr><tr><th>ขอบเขตผลกระทบ</th><td>ทีม / หน่วยงาน</td></tr>
+  <tr><th>กลุ่มผู้ใช้งานเป้าหมาย</th><td>พนักงานทุกคน</td></tr>
+  <tr><th>ช่องทางที่บันทึก</th><td>ความรู้ในหัวพนักงาน</td></tr>
+  <tr><th>ผู้ส่งเรื่อง</th><td>อรุณี ทองแท้</td></tr>
+  <tr><th>วันที่เผยแพร่</th><td>31 ส.ค. 2569 (2026) 11:09 AM</td></tr>
+  <tr><th>กำหนดทบทวนครั้งถัดไป</th><td>12 ก.ย. 2569 (2026)
+    <span class="due-mark due-overdue">เกินกำหนดทบทวน</span>
+    </td></tr>
+</table>
+
+
+
+<h2>ผู้ที่เข้าถึงรายการนี้ได้</h2>
+
+
+
+<p>พนักงานทุกคนในบริษัทเข้าถึงรายการนี้ได้</p>
+
+
+
+
+
+<h2>รายการที่เกี่ยวข้อง</h2>
+<ul class="home-list">
+  
+  <li>
+    <a href="#" data-inactive="1" style="cursor:default">รายงานสรุปข้อสังเกตจากการตรวจสอบบัญชีประจำปี 2568 และสถานะการแก้ไข</a>
+    <span class="meta asset-code">KM-INS-00150</span>
+  </li>
+  
+  <li>
+    <a href="#" data-inactive="1" style="cursor:default">ขั้นตอนการตรวจสอบและบันทึกใบแจ้งหนี้จากผู้ขายเข้าระบบบัญชีเจ้าหนี้</a>
+    <span class="meta asset-code">KM-SOP-00186</span>
+  </li>
+  
+  <li>
+    <a href="#" data-inactive="1" style="cursor:default">ขั้นตอนการตรวจสอบและอนุมัติใบสำคัญจ่ายก่อนโอนเงินผ่านธนาคาร</a>
+    <span class="meta asset-code">KM-SOP-00187</span>
+  </li>
+  
+  <li>
+    <a href="#" data-inactive="1" style="cursor:default">ขั้นตอนการเตรียมเอกสารสำหรับการตรวจสอบบัญชีประจำปีของแผนกบัญชี</a>
+    <span class="meta asset-code">KM-SOP-00265</span>
+  </li>
+  
+  <li>
+    <a href="#" data-inactive="1" style="cursor:default">ขั้นตอนการบันทึกและอนุมัติค่าใช้จ่ายค้างจ่ายสิ้นงวด</a>
+    <span class="meta asset-code">KM-SOP-00211</span>
+  </li>
+  
+</ul>
+
+
+
+
+
+
+
+<h2>การดำเนินการ</h2>
+
+
+
+
+
+
+
+
+
+
+<p><a class="action-link" href="#" data-inactive="1" style="cursor:default">แก้ไขรายการนี้</a></p>
+
+
+
+
+
+<p style="margin-top:1rem">
+  
+  <a class="action-link"
+     href="#" data-inactive="1" style="cursor:default">เก็บเป็นประวัติ…</a>
+  
+  <a class="action-link action-danger"
+     href="#" data-inactive="1" style="cursor:default">ยุติการใช้งาน…</a>
+  
+  <a class="action-link"
+     href="#" data-inactive="1" style="cursor:default">ส่งกลับให้แก้ไข…</a>
+  
+</p>
+<p class="meta">การดำเนินการเหล่านี้ต้องระบุเหตุผล และจะเปิดหน้ายืนยันก่อนบันทึก</p>
+
+
+
+<h2>ประวัติการเปลี่ยนแปลง</h2>
+
+
+<table class="detail-table">
+  <tr><th>เมื่อ</th><th>การเปลี่ยนแปลง</th><th>โดย</th><th>บทบาท</th><th>หมายเหตุ</th></tr>
+  
+  <tr>
+    <td>31 ส.ค. 2569 (2026) 11:09 AM</td>
+    <td>
+      
+        — → <strong>ส่งเรื่องแล้ว</strong>
+      
+    </td>
+    <td>อรุณี ทองแท้</td>
+    <td>—</td>
+    <td>—</td>
+  </tr>
+  
+  <tr>
+    <td>31 ส.ค. 2569 (2026) 11:09 AM</td>
+    <td>
+      
+        ส่งเรื่องแล้ว → <strong>อยู่ระหว่างตรวจสอบ</strong>
+      
+    </td>
+    <td>ธนพล ศรีวิไล</td>
+    <td>ผู้ตรวจสอบสายงาน</td>
+    <td>—</td>
+  </tr>
+  
+  <tr>
+    <td>31 ส.ค. 2569 (2026) 11:09 AM</td>
+    <td>
+      
+        อยู่ระหว่างตรวจสอบ → <strong>อนุมัติแล้ว</strong>
+      
+    </td>
+    <td>ณัฐวุฒิ พงษ์ไพบูลย์</td>
+    <td>ผู้อนุมัติ</td>
+    <td>—</td>
+  </tr>
+  
+  <tr>
+    <td>31 ส.ค. 2569 (2026) 11:09 AM</td>
+    <td>
+      
+        อนุมัติแล้ว → <strong>เผยแพร่แล้ว</strong>
+      
+    </td>
+    <td>กมลชนก แสงทอง</td>
+    <td>ผู้ดูแลระบบฐานข้อมูลความรู้</td>
+    <td>—</td>
+  </tr>
+  
+</table>
+
+
+
+  
+  <script>
+    (function () {
+      var KEY = "km_theme";
+      var btn = document.getElementById("theme-toggle");
+
+      // INLINE SVG, NOT THE EMOJI CHARACTERS THEY REPLACE (2026-08-26).
+      // The sun emoji's own ink is off-centre in its character box --
+      // measured on a canvas at 12% right of centre -- and that is a
+      // property of the emoji FONT, which differs by platform. A
+      // translateX() nudge nulled it out in one environment and did
+      // nothing in another (confirmed: this container's font centred
+      // the glyph correctly, so the nudge had nothing to correct and
+      // Kin's browser still showed it off, on a different font
+      // entirely). Nothing tunable fixes a per-font problem.
+      //
+      // Both paths are drawn on this file's own 24x24 grid, so both are
+      // centred by CONSTRUCTION rather than by measuring somebody's
+      // font and hoping the next platform agrees. `stroke="currentColor"`
+      // instead of `fill`, matching `.theme-toggle`'s `color: inherit` --
+      // no new colour variable, and the icon recolours itself for free
+      // wherever the button's text colour already changes.
+      var SUN_SVG =
+        '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" ' +
+        'stroke="currentColor" stroke-width="2" stroke-linecap="round" ' +
+        'aria-hidden="true" focusable="false">' +
+        '<circle cx="12" cy="12" r="4.5"></circle>' +
+        '<line x1="12" y1="2.5" x2="12" y2="4.5"></line>' +
+        '<line x1="12" y1="19.5" x2="12" y2="21.5"></line>' +
+        '<line x1="4.93" y1="4.93" x2="6.34" y2="6.34"></line>' +
+        '<line x1="17.66" y1="17.66" x2="19.07" y2="19.07"></line>' +
+        '<line x1="2.5" y1="12" x2="4.5" y2="12"></line>' +
+        '<line x1="19.5" y1="12" x2="21.5" y2="12"></line>' +
+        '<line x1="4.93" y1="19.07" x2="6.34" y2="17.66"></line>' +
+        '<line x1="17.66" y1="6.34" x2="19.07" y2="4.93"></line>' +
+        '</svg>';
+      // A CIRCLE WITH A BITE, not the emoji's crescent, and drawn as a
+      // filled shape rather than an outline -- an outlined crescent is
+      // two thin arcs with nothing behind them and reads as a sliver at
+      // 16px. The bite circle is offset up-and-right by the same amount
+      // in both axes, which is what keeps the remaining crescent's own
+      // visual weight centred in the 24x24 grid rather than pushed to
+      // one side.
+      var MOON_SVG =
+        '<svg viewBox="0 0 24 24" width="16" height="16" ' +
+        'aria-hidden="true" focusable="false">' +
+        '<mask id="km-moon-bite"><rect width="24" height="24" ' +
+        'fill="white"></rect><circle cx="15" cy="9" r="7" ' +
+        'fill="black"></circle></mask>' +
+        '<circle cx="12" cy="12" r="8.5" fill="currentColor" ' +
+        'mask="url(#km-moon-bite)"></circle>' +
+        '</svg>';
+
+      function stored() {
+        try { return localStorage.getItem(KEY); } catch (e) { return null; }
+      }
+      function effective() {
+        return stored() === "dark" ? "dark" : "light";
+      }
+      function paint() {
+        var mode = effective();
+        var isSun = mode === "dark";
+        // Shows what clicking WOULD switch to -- the opposite of now.
+        btn.innerHTML = isSun ? SUN_SVG : MOON_SVG;
+        btn.setAttribute("aria-label",
+          mode === "dark" ? "สลับเป็นโหมดสว่าง" : "สลับเป็นโหมดมืด");
+        btn.style.visibility = "visible";
+      }
+      btn.addEventListener("click", function () {
+        var next = effective() === "dark" ? "light" : "dark";
+        document.documentElement.setAttribute("data-theme", next);
+        try { localStorage.setItem(KEY, next); } catch (e) {}
+        paint();
+      });
+      paint();
+    })();
+  </script>
+  <script src="static/app.js"></script>
+  <script src="static/workspace.js"></script>
+  <script src="static/functional.js"></script>
+</body>
+</html>

@@ -1,0 +1,2200 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+
+  
+  <link rel="icon" href="static/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="static/favicon-32.png" sizes="32x32" type="image/png">
+  <link rel="apple-touch-icon" href="static/apple-touch-icon.png">
+
+  
+  <script>
+    try {
+      var t = localStorage.getItem("km_theme");
+      document.documentElement.setAttribute("data-theme", t === "dark" ? "dark" : "light");
+    } catch (e) {
+      document.documentElement.setAttribute("data-theme", "light");
+    }
+  </script>
+
+  
+  <link rel="preload" as="font" type="font/ttf" crossorigin href="static/fonts/Sarabun-Regular.ttf">
+  <link rel="preload" as="font" type="font/ttf" crossorigin href="static/fonts/Sarabun-SemiBold.ttf">
+  <link rel="preload" as="font" type="font/ttf" crossorigin href="static/fonts/Sarabun-Bold.ttf">
+
+  
+  <link rel="stylesheet" href="static/theme.css">
+  
+  <link rel="stylesheet" href="static/app.css">
+  <link rel="stylesheet" href="static/modern.css">
+  <link rel="stylesheet" href="static/workspace.css">
+  <link rel="stylesheet" href="static/functional.css">
+
+  <title>คำศัพท์ควบคุม · ฐานข้อมูลความรู้</title>
+  <style>
+
+    /* THE COLOR AND FONT NAMES this stylesheet uses (var(--...)) are
+       defined in static/theme.css, loaded above -- that is the one file
+       meant for changing how the system looks. Nothing below this
+       point should name a raw color outside that file.
+
+       This said the one deliberate exception was the video player's
+       background, "further down, which is explained where it appears",
+       until 2026-09-09 -- this block holds only the three @font-face
+       rules below and never contained a video player. The exception is
+       real but lives in a different file: static/app.css:386-390, next
+       to the video element itself, names the #000 and explains why. */
+
+    /* Self-hosted Sarabun (SIL Open Font License, see
+       static/fonts/OFL-Sarabun.txt). This was the site's font until
+       2026-07-21, when it was swapped for Noto Sans Thai to match a
+       partner web portal this app was expected to be integrated with.
+       That integration is not happening, and switched back to Sarabun
+       2026-08-24 on Kin's own readability preference -- verified first
+       against a real concern he raised (Sarabun clipping diacritics at
+       tight line-height in Microsoft Word): rendered the site's own
+       heading (1.35) and body (1.7) line-heights with a wrapping,
+       diacritic-heavy title and found no clipping or line-to-line
+       collision, in either this font or the two alternatives compared
+       against it. Word's paragraph line-box model differs from a
+       browser's, which is the likely reason the same font can misbehave
+       there without it appearing here.
+
+       `static/fonts/NotoSansThai-*.ttf` are LEFT IN PLACE, untouched --
+       export.py registers those exact files for PDF generation and
+       nothing about this change may disturb that path (see export.py's
+       own comment on why Thai in a PDF is verified by looking, not
+       reasoning). The two font families now coexist deliberately: one
+       for the screen, one for the export.
+
+       Deliberately NOT loaded from Google Fonts or any CDN — the app must
+       render correctly with no outbound network access. Three weights only
+       (400/600/700), normal width, from the family's static/ set rather
+       than the variable font, for the same file-size and no-variation-CSS
+       reasons Noto Sans Thai was. Sarabun does carry italics, unlike Noto
+       Sans Thai, but nothing in the UI asks for one, so none are loaded.
+       font-display: swap so text is readable immediately and never
+       invisible while the font loads. */
+    @font-face {
+      font-family: 'Sarabun';
+      src: url("/static/fonts/Sarabun-Regular.ttf?v=1787538704") format('truetype');
+      font-weight: 400;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Sarabun';
+      src: url("/static/fonts/Sarabun-SemiBold.ttf?v=1787538704") format('truetype');
+      font-weight: 600;
+      font-style: normal;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Sarabun';
+      src: url("/static/fonts/Sarabun-Bold.ttf?v=1787538704") format('truetype');
+      font-weight: 700;
+      font-style: normal;
+      font-display: swap;
+    }
+  </style>
+</head>
+<body><div style="position:relative;z-index:50;margin:-2rem -1rem 1.75rem;background:#14456f;color:#fff;padding:12px 18px;font-size:14px;line-height:1.6;font-family:Sarabun,sans-serif">ภาพหน้าจอของระบบ KM บันทึกเมื่อ 14 กันยายน 2569 &nbsp;—&nbsp; สำเนาแบบคงที่ ปุ่มและช่องค้นหาไม่ทำงาน &nbsp;·&nbsp; <a href="index.html" style="color:#cfe3f7;text-decoration:underline">สารบัญของสำเนา</a></div>
+  
+  <div class="whoami">
+    
+    <span><span class="whoami-meta">ผู้ใช้:</span>
+      <span class="whoami-name">กมลชนก แสงทอง</span></span>
+    
+    <span class="whoami-meta">องค์กรและกลยุทธ์</span>
+    
+    <span class="whoami-meta">บทบาท: ผู้ดูแลระบบฐานข้อมูลความรู้</span>
+    
+    
+    
+    
+    
+    <span class="prototype-banner">PRODUCT PROTOTYPE [UPDATED: 14/9/26; 2:30 PM BKK]</span>
+    
+    <button type="button" class="theme-toggle" id="theme-toggle"
+            style="visibility:hidden" aria-label="สลับเป็นโหมดมืด"
+            title="สลับโหมดสี"></button>
+  </div>
+  
+  <nav>
+    
+    <div class="nav-row">
+      
+      
+      <a href="index.html">🏠 หน้าแรก</a>
+      <a href="#" data-inactive="1" style="cursor:default">➕ เพิ่มความรู้</a>
+      <a href="search-sentence.html">🔎 ค้นหาความรู้</a>
+    </div>
+    
+    <div class="nav-row">
+      
+      
+      <a href="worklist.html">งานที่ต้องดำเนินการ</a>
+      
+      <a href="access-log.html">บันทึกการเข้าดู</a>
+      
+      <a href="export-log.html">บันทึกการนำออก</a>
+      
+      
+      <a href="#" data-inactive="1" style="cursor:default">ข้อมูลบุคลากร</a>
+      
+      <a href="vocabulary.html">คำศัพท์ควบคุม</a>
+      
+    </div>
+    
+  </nav>
+  
+
+<h1>คำศัพท์ควบคุม</h1>
+<p class="meta">
+  รายการเหล่านี้ถูกออกแบบให้แก้ไขได้โดยไม่ต้องแก้โปรแกรม
+  การเปลี่ยนแปลงทุกครั้งจะถูกบันทึกพร้อมชื่อผู้แก้ไข
+</p>
+
+
+
+
+<section class="home-section" id="pending">
+  <h2>หัวข้อที่รอพิจารณา <span class="home-count">1</span></h2>
+  
+  
+  <table class="detail-table">
+    <tr><th>ชื่อ</th><th>คำอธิบาย</th><th>กลุ่ม</th><th>เสนอเมื่อ</th>
+      <th>ผลการพิจารณา</th></tr>
+    
+    <tr>
+      <td>การกำกับดูแลการใช้ปัญญาประดิษฐ์<br><span class="meta">AI governance</span></td>
+      <td>แนวปฏิบัติและการกำกับดูแลการนำปัญญาประดิษฐ์มาใช้ในงานขององค์กร ครอบคลุมการประเมินความเสี่ยง การตรวจสอบโดยมนุษย์ และการทบทวนผล</td>
+      <td>—</td>
+      <td>31 ส.ค. 2569 (2026) 11:09 AM</td>
+      
+      <td>
+        <form method="post" action="#" onsubmit="return false">
+          <input type="text" name="note" maxlength="500" placeholder="เหตุผล (ไม่บังคับ)">
+          <button type="submit" name="decision" value="approved">อนุมัติ</button>
+          <button type="submit" name="decision" value="rejected">ไม่อนุมัติ</button>
+        </form>
+      </td>
+      
+    </tr>
+    
+  </table>
+  
+  <p><a href="#" data-inactive="1" style="cursor:default">เสนอหัวข้อใหม่</a></p>
+</section>
+
+
+
+<section class="home-section" id="business_areas">
+  <h2>หน่วยงาน <span class="home-count">13</span></h2>
+
+  <table class="detail-table">
+    <tr>
+      <th>รหัส</th>
+      <th>ชื่อ (ไทย)</th><th>ชื่อ (อังกฤษ)</th>
+      
+      
+      
+      <th>ลำดับ</th><th>ใช้งาน</th><th></th><th></th>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      <td><code>HR</code></td>
+      <td><input type="text" name="name_th" value="ทรัพยากรบุคคล" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Human Resources" maxlength="120" required></td>
+      
+      
+      
+      <td><input type="number" name="sort_order" value="1" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      <td><code>FIN</code></td>
+      <td><input type="text" name="name_th" value="การเงินและบัญชี" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Finance &amp; Accounting" maxlength="120" required></td>
+      
+      
+      
+      <td><input type="number" name="sort_order" value="2" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      <td><code>SAL</code></td>
+      <td><input type="text" name="name_th" value="การขายและการตลาด" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Sales &amp; Marketing" maxlength="120" required></td>
+      
+      
+      
+      <td><input type="number" name="sort_order" value="3" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      <td><code>BD</code></td>
+      <td><input type="text" name="name_th" value="พัฒนาธุรกิจ" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Business Development" maxlength="120" required></td>
+      
+      
+      
+      <td><input type="number" name="sort_order" value="4" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      <td><code>OPS</code></td>
+      <td><input type="text" name="name_th" value="ปฏิบัติการและบำรุงรักษา" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Operation &amp; Maintenance" maxlength="120" required></td>
+      
+      
+      
+      <td><input type="number" name="sort_order" value="5" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      <td><code>CUS</code></td>
+      <td><input type="text" name="name_th" value="บริการลูกค้า" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Customer Service" maxlength="120" required></td>
+      
+      
+      
+      <td><input type="number" name="sort_order" value="6" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      <td><code>TECH</code></td>
+      <td><input type="text" name="name_th" value="เทคโนโลยีและข้อมูล" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Technology / Data" maxlength="120" required></td>
+      
+      
+      
+      <td><input type="number" name="sort_order" value="7" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      <td><code>RLC</code></td>
+      <td><input type="text" name="name_th" value="ความเสี่ยง กฎหมาย และกำกับดูแล" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Risk / Legal / Compliance" maxlength="120" required></td>
+      
+      
+      
+      <td><input type="number" name="sort_order" value="8" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      <td><code>SAF</code></td>
+      <td><input type="text" name="name_th" value="ความปลอดภัย" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Safety" maxlength="120" required></td>
+      
+      
+      
+      <td><input type="number" name="sort_order" value="9" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      <td><code>COR</code></td>
+      <td><input type="text" name="name_th" value="องค์กรและกลยุทธ์" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Corporate / Strategy" maxlength="120" required></td>
+      
+      
+      
+      <td><input type="number" name="sort_order" value="10" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      <td><code>PSC</code></td>
+      <td><input type="text" name="name_th" value="จัดซื้อและห่วงโซ่อุปทาน" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Procurement &amp; Supply Chain" maxlength="120" required></td>
+      
+      
+      
+      <td><input type="number" name="sort_order" value="11" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      <td><code>DSRO</code></td>
+      <td><input type="text" name="name_th" value="การกระจายสินค้า การขาย และค้าปลีก" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Distribution &amp; Sales and Retail Operation" maxlength="120" required></td>
+      
+      
+      
+      <td><input type="number" name="sort_order" value="12" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      <td><code>OTH</code></td>
+      <td><input type="text" name="name_th" value="อื่นๆ" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Other" maxlength="120" required></td>
+      
+      
+      
+      <td><input type="number" name="sort_order" value="13" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+  </table>
+
+  
+  
+  
+  <details style="margin-top:0.75rem">
+    <summary>เพิ่มหน่วยงานใหม่</summary>
+    <form method="post" action="#" onsubmit="return false">
+      <label>รหัส (ตั้งได้ครั้งเดียว เปลี่ยนภายหลังไม่ได้)</label>
+      <input type="text" name="code" maxlength="16" required
+             value=""
+             pattern="[A-Za-z0-9_]+" title="ตัวอักษรภาษาอังกฤษหรือตัวเลขเท่านั้น">
+      <label>ชื่อ (ไทย)</label>
+      <input type="text" name="name_th" maxlength="120" required
+             value="">
+      <label>ชื่อ (อังกฤษ)</label>
+      <input type="text" name="name_en" maxlength="120" required
+             value="">
+      
+      
+      <label>ลำดับการแสดง</label>
+      
+      <input type="number" name="sort_order" style="width:5rem"
+             value="0">
+      <p style="margin-top:0.75rem"><button type="submit">เพิ่ม</button></p>
+    </form>
+  </details>
+  
+</section>
+
+<section class="home-section" id="knowledge_types">
+  <h2>ประเภทความรู้ <span class="home-count">10</span></h2>
+
+  <table class="detail-table">
+    <tr>
+      <th>รหัส</th>
+      <th>ชื่อ (ไทย)</th><th>ชื่อ (อังกฤษ)</th>
+      <th>คำอธิบาย</th>
+      
+      <th title="ต้องมีผู้อนุมัติสองลำดับ">2 ลำดับ</th>
+      <th>ลำดับ</th><th>ใช้งาน</th><th></th><th></th>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      <td><code>POL</code></td>
+      <td><input type="text" name="name_th" value="นโยบาย มาตรฐาน และแนวทาง" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Policy / Standard / Guideline" maxlength="120" required></td>
+      
+      <td><input type="text" name="definition" value="เอกสารที่กำหนดหลักการ ข้อกำหนด หรือแนวทางกลางขององค์กร" maxlength="500"></td>
+      
+      
+      
+      
+      
+      <td><input type="hidden" name="escalates_approval_present" value="1">
+          <input type="checkbox" name="escalates_approval"
+                 checked></td>
+      
+      <td><input type="number" name="sort_order" value="1" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      <td><code>SOP</code></td>
+      <td><input type="text" name="name_th" value="กระบวนการ ขั้นตอน และวิธีปฏิบัติงาน" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Process / Procedure / SOP" maxlength="120" required></td>
+      
+      <td><input type="text" name="definition" value="เอกสารที่อธิบายลำดับขั้นตอนการทำงานอย่างชัดเจน" maxlength="500"></td>
+      
+      
+      
+      
+      
+      <td><input type="hidden" name="escalates_approval_present" value="1">
+          <input type="checkbox" name="escalates_approval"
+                 checked></td>
+      
+      <td><input type="number" name="sort_order" value="2" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      <td><code>BP</code></td>
+      <td><input type="text" name="name_th" value="แนวปฏิบัติที่ดีและกรณีความสำเร็จ" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Best Practice / Success Case" maxlength="120" required></td>
+      
+      <td><input type="text" name="definition" value="วิธีปฏิบัติหรือกรณีที่ทำแล้วได้ผลดีและสามารถนำไปใช้ซ้ำได้" maxlength="500"></td>
+      
+      
+      
+      
+      
+      <td><input type="hidden" name="escalates_approval_present" value="1">
+          <input type="checkbox" name="escalates_approval"
+                 ></td>
+      
+      <td><input type="number" name="sort_order" value="3" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      <td><code>LL</code></td>
+      <td><input type="text" name="name_th" value="บทเรียนและกรณีทบทวน" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Lesson Learned / Case Review" maxlength="120" required></td>
+      
+      <td><input type="text" name="definition" value="บทเรียนจากเหตุการณ์หรือปัญหา เพื่อป้องกันและปรับปรุงไม่ให้เกิดซ้ำ" maxlength="500"></td>
+      
+      
+      
+      
+      
+      <td><input type="hidden" name="escalates_approval_present" value="1">
+          <input type="checkbox" name="escalates_approval"
+                 ></td>
+      
+      <td><input type="number" name="sort_order" value="4" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      <td><code>TOOL</code></td>
+      <td><input type="text" name="name_th" value="แบบฟอร์ม เครื่องมือ และตัวช่วยทำงาน" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Template / Tool / Job Aid" maxlength="120" required></td>
+      
+      <td><input type="text" name="definition" value="สิ่งที่ช่วยให้พนักงานนำไปใช้ทำงานได้ทันที" maxlength="500"></td>
+      
+      
+      
+      
+      
+      <td><input type="hidden" name="escalates_approval_present" value="1">
+          <input type="checkbox" name="escalates_approval"
+                 ></td>
+      
+      <td><input type="number" name="sort_order" value="5" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      <td><code>LRN</code></td>
+      <td><input type="text" name="name_th" value="สื่อและเนื้อหาการเรียนรู้" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Learning Content" maxlength="120" required></td>
+      
+      <td><input type="text" name="definition" value="เนื้อหาที่จัดทำขึ้นเพื่อให้ความรู้ สร้างความเข้าใจ หรือพัฒนาทักษะ" maxlength="500"></td>
+      
+      
+      
+      
+      
+      <td><input type="hidden" name="escalates_approval_present" value="1">
+          <input type="checkbox" name="escalates_approval"
+                 ></td>
+      
+      <td><input type="number" name="sort_order" value="6" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      <td><code>INS</code></td>
+      <td><input type="text" name="name_th" value="ข้อมูล รายงาน และข้อค้นพบ" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Data / Report / Insight" maxlength="120" required></td>
+      
+      <td><input type="text" name="definition" value="ข้อมูลหรือผลวิเคราะห์ที่ใช้ประกอบการตัดสินใจและวางแผนงาน" maxlength="500"></td>
+      
+      
+      
+      
+      
+      <td><input type="hidden" name="escalates_approval_present" value="1">
+          <input type="checkbox" name="escalates_approval"
+                 ></td>
+      
+      <td><input type="number" name="sort_order" value="7" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      <td><code>EXP</code></td>
+      <td><input type="text" name="name_th" value="ความรู้ผู้เชี่ยวชาญและคำถามที่พบบ่อย" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Expert Knowledge / FAQ" maxlength="120" required></td>
+      
+      <td><input type="text" name="definition" value="ความรู้จากประสบการณ์ เทคนิคเฉพาะด้าน หรือคำตอบที่ใช้บ่อย" maxlength="500"></td>
+      
+      
+      
+      
+      
+      <td><input type="hidden" name="escalates_approval_present" value="1">
+          <input type="checkbox" name="escalates_approval"
+                 ></td>
+      
+      <td><input type="number" name="sort_order" value="8" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      <td><code>AI</code></td>
+      <td><input type="text" name="name_th" value="กรณีการนำ AI ไปใช้" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="AI Use Case" maxlength="120" required></td>
+      
+      <td><input type="text" name="definition" value="กรณีการใช้ AI เพื่อสนับสนุน ปรับปรุง หรือเพิ่มประสิทธิภาพงาน" maxlength="500"></td>
+      
+      
+      
+      
+      
+      <td><input type="hidden" name="escalates_approval_present" value="1">
+          <input type="checkbox" name="escalates_approval"
+                 ></td>
+      
+      <td><input type="number" name="sort_order" value="9" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      <td><code>OTH</code></td>
+      <td><input type="text" name="name_th" value="อื่นๆ / รอจัดประเภท" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Other / Pending Classification" maxlength="120" required></td>
+      
+      <td><input type="text" name="definition" value="ใช้สำหรับเนื้อหาที่ต้องให้ KM Admin ช่วยพิจารณาจัดประเภทเพิ่มเติม" maxlength="500"></td>
+      
+      
+      
+      
+      
+      <td><input type="hidden" name="escalates_approval_present" value="1">
+          <input type="checkbox" name="escalates_approval"
+                 ></td>
+      
+      <td><input type="number" name="sort_order" value="10" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+  </table>
+
+  
+  
+  
+  <details style="margin-top:0.75rem">
+    <summary>เพิ่มประเภทความรู้ใหม่</summary>
+    <form method="post" action="#" onsubmit="return false">
+      <label>รหัส (ตั้งได้ครั้งเดียว เปลี่ยนภายหลังไม่ได้)</label>
+      <input type="text" name="code" maxlength="16" required
+             value=""
+             pattern="[A-Za-z0-9_]+" title="ตัวอักษรภาษาอังกฤษหรือตัวเลขเท่านั้น">
+      <label>ชื่อ (ไทย)</label>
+      <input type="text" name="name_th" maxlength="120" required
+             value="">
+      <label>ชื่อ (อังกฤษ)</label>
+      <input type="text" name="name_en" maxlength="120" required
+             value="">
+      
+      <label>คำอธิบาย</label>
+      <input type="text" name="definition" maxlength="500" required
+             value="">
+      
+      
+      <label class="checkbox-row">
+        <input type="checkbox" name="escalates_approval"
+               >
+        ต้องผ่านผู้อนุมัติสองลำดับ (เช่น นโยบาย และ SOP)
+      </label>
+      
+      <label>ลำดับการแสดง</label>
+      
+      <input type="number" name="sort_order" style="width:5rem"
+             value="0">
+      <p style="margin-top:0.75rem"><button type="submit">เพิ่ม</button></p>
+    </form>
+  </details>
+  
+</section>
+
+<section class="home-section" id="topics">
+  <h2>หัวข้อ <span class="home-count">24</span></h2>
+
+  <table class="detail-table">
+    <tr>
+      
+      <th>ชื่อ (ไทย)</th><th>ชื่อ (อังกฤษ)</th>
+      <th>คำอธิบาย</th>
+      <th>กลุ่ม</th><th>สถานะ</th>
+      
+      <th>ลำดับ</th><th>ใช้งาน</th><th></th><th></th>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      
+      <td><input type="text" name="name_th" value="การกำกับดูแลการใช้ปัญญาประดิษฐ์" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="AI governance" maxlength="120" required></td>
+      
+      <td><input type="text" name="definition" value="แนวปฏิบัติและการกำกับดูแลการนำปัญญาประดิษฐ์มาใช้ในงานขององค์กร ครอบคลุมการประเมินความเสี่ยง การตรวจสอบโดยมนุษย์ และการทบทวนผล" maxlength="500"></td>
+      
+      
+      <td>
+        
+        <select name="parent_id">
+          <option value="">— ไม่มีกลุ่ม —</option>
+          
+          
+          
+          <option value="1"
+                  >
+            กำกับดูแลและความเสี่ยง
+          </option>
+          
+          
+          
+          <option value="2"
+                  >
+            การปฏิบัติงานและลูกค้า
+          </option>
+          
+          
+          
+          <option value="3"
+                  >
+            เทคโนโลยีและข้อมูล
+          </option>
+          
+          
+          
+          <option value="4"
+                  >
+            บุคลากรและองค์กร
+          </option>
+          
+        </select>
+        
+      </td>
+      <td><span class="meta">รอพิจารณา</span></td>
+      
+      
+      <td><input type="number" name="sort_order" value="0" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      
+      <td><input type="text" name="name_th" value="กำกับดูแลและความเสี่ยง" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Governance &amp; Risk" maxlength="120" required></td>
+      
+      <td><input type="text" name="definition" value="กลุ่มหัวข้อด้านการกำกับดูแล ความเสี่ยง และการปฏิบัติตามกฎเกณฑ์" maxlength="500"></td>
+      
+      
+      <td>
+        <span class="meta">(เป็นกลุ่ม)</span>
+        
+      </td>
+      <td><span class="meta">อนุมัติแล้ว</span></td>
+      
+      
+      <td><input type="number" name="sort_order" value="100" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      
+      <td><input type="text" name="name_th" value="ทุจริตและคอร์รัปชัน" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Fraud &amp; Corruption" maxlength="120" required></td>
+      
+      <td><input type="text" name="definition" value="การทุจริต ฉ้อโกง ผลประโยชน์ทับซ้อน การสอบสวน และมาตรการป้องกัน" maxlength="500"></td>
+      
+      
+      <td>
+        
+        <select name="parent_id">
+          <option value="">— ไม่มีกลุ่ม —</option>
+          
+          
+          
+          <option value="1"
+                  selected>
+            กำกับดูแลและความเสี่ยง
+          </option>
+          
+          
+          
+          <option value="2"
+                  >
+            การปฏิบัติงานและลูกค้า
+          </option>
+          
+          
+          
+          <option value="3"
+                  >
+            เทคโนโลยีและข้อมูล
+          </option>
+          
+          
+          
+          <option value="4"
+                  >
+            บุคลากรและองค์กร
+          </option>
+          
+        </select>
+        
+      </td>
+      <td><span class="meta">อนุมัติแล้ว</span></td>
+      
+      
+      <td><input type="number" name="sort_order" value="101" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      
+      <td><input type="text" name="name_th" value="ความปลอดภัยและอาชีวอนามัย" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Safety &amp; Occupational Health" maxlength="120" required></td>
+      
+      <td><input type="text" name="definition" value="ความปลอดภัยในการทำงาน อุบัติเหตุ เหตุเกือบเกิด และสุขภาพของผู้ปฏิบัติงาน" maxlength="500"></td>
+      
+      
+      <td>
+        
+        <select name="parent_id">
+          <option value="">— ไม่มีกลุ่ม —</option>
+          
+          
+          
+          <option value="1"
+                  selected>
+            กำกับดูแลและความเสี่ยง
+          </option>
+          
+          
+          
+          <option value="2"
+                  >
+            การปฏิบัติงานและลูกค้า
+          </option>
+          
+          
+          
+          <option value="3"
+                  >
+            เทคโนโลยีและข้อมูล
+          </option>
+          
+          
+          
+          <option value="4"
+                  >
+            บุคลากรและองค์กร
+          </option>
+          
+        </select>
+        
+      </td>
+      <td><span class="meta">อนุมัติแล้ว</span></td>
+      
+      
+      <td><input type="number" name="sort_order" value="102" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      
+      <td><input type="text" name="name_th" value="การบริหารความเสี่ยง" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Risk Management" maxlength="120" required></td>
+      
+      <td><input type="text" name="definition" value="การระบุ ประเมิน และควบคุมความเสี่ยงขององค์กร รวมถึงแผนรองรับเหตุการณ์" maxlength="500"></td>
+      
+      
+      <td>
+        
+        <select name="parent_id">
+          <option value="">— ไม่มีกลุ่ม —</option>
+          
+          
+          
+          <option value="1"
+                  selected>
+            กำกับดูแลและความเสี่ยง
+          </option>
+          
+          
+          
+          <option value="2"
+                  >
+            การปฏิบัติงานและลูกค้า
+          </option>
+          
+          
+          
+          <option value="3"
+                  >
+            เทคโนโลยีและข้อมูล
+          </option>
+          
+          
+          
+          <option value="4"
+                  >
+            บุคลากรและองค์กร
+          </option>
+          
+        </select>
+        
+      </td>
+      <td><span class="meta">อนุมัติแล้ว</span></td>
+      
+      
+      <td><input type="number" name="sort_order" value="103" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      
+      <td><input type="text" name="name_th" value="กฎหมายและการกำกับดูแล" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Legal &amp; Compliance" maxlength="120" required></td>
+      
+      <td><input type="text" name="definition" value="ข้อกำหนดทางกฎหมาย สัญญา และการปฏิบัติตามกฎเกณฑ์ของหน่วยงานกำกับ" maxlength="500"></td>
+      
+      
+      <td>
+        
+        <select name="parent_id">
+          <option value="">— ไม่มีกลุ่ม —</option>
+          
+          
+          
+          <option value="1"
+                  selected>
+            กำกับดูแลและความเสี่ยง
+          </option>
+          
+          
+          
+          <option value="2"
+                  >
+            การปฏิบัติงานและลูกค้า
+          </option>
+          
+          
+          
+          <option value="3"
+                  >
+            เทคโนโลยีและข้อมูล
+          </option>
+          
+          
+          
+          <option value="4"
+                  >
+            บุคลากรและองค์กร
+          </option>
+          
+        </select>
+        
+      </td>
+      <td><span class="meta">อนุมัติแล้ว</span></td>
+      
+      
+      <td><input type="number" name="sort_order" value="104" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      
+      <td><input type="text" name="name_th" value="ข้อมูลส่วนบุคคล (PDPA)" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Personal Data / PDPA" maxlength="120" required></td>
+      
+      <td><input type="text" name="definition" value="การเก็บ ใช้ และเปิดเผยข้อมูลส่วนบุคคลตามกฎหมายคุ้มครองข้อมูลส่วนบุคคล" maxlength="500"></td>
+      
+      
+      <td>
+        
+        <select name="parent_id">
+          <option value="">— ไม่มีกลุ่ม —</option>
+          
+          
+          
+          <option value="1"
+                  selected>
+            กำกับดูแลและความเสี่ยง
+          </option>
+          
+          
+          
+          <option value="2"
+                  >
+            การปฏิบัติงานและลูกค้า
+          </option>
+          
+          
+          
+          <option value="3"
+                  >
+            เทคโนโลยีและข้อมูล
+          </option>
+          
+          
+          
+          <option value="4"
+                  >
+            บุคลากรและองค์กร
+          </option>
+          
+        </select>
+        
+      </td>
+      <td><span class="meta">อนุมัติแล้ว</span></td>
+      
+      
+      <td><input type="number" name="sort_order" value="105" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      
+      <td><input type="text" name="name_th" value="ความมั่นคงปลอดภัยไซเบอร์" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Cybersecurity" maxlength="120" required></td>
+      
+      <td><input type="text" name="definition" value="การป้องกันภัยคุกคามทางไซเบอร์ การควบคุมสิทธิ์เข้าถึง และความปลอดภัยของระบบ" maxlength="500"></td>
+      
+      
+      <td>
+        
+        <select name="parent_id">
+          <option value="">— ไม่มีกลุ่ม —</option>
+          
+          
+          
+          <option value="1"
+                  selected>
+            กำกับดูแลและความเสี่ยง
+          </option>
+          
+          
+          
+          <option value="2"
+                  >
+            การปฏิบัติงานและลูกค้า
+          </option>
+          
+          
+          
+          <option value="3"
+                  >
+            เทคโนโลยีและข้อมูล
+          </option>
+          
+          
+          
+          <option value="4"
+                  >
+            บุคลากรและองค์กร
+          </option>
+          
+        </select>
+        
+      </td>
+      <td><span class="meta">อนุมัติแล้ว</span></td>
+      
+      
+      <td><input type="number" name="sort_order" value="106" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      
+      <td><input type="text" name="name_th" value="การปฏิบัติงานและลูกค้า" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Operations &amp; Customer" maxlength="120" required></td>
+      
+      <td><input type="text" name="definition" value="กลุ่มหัวข้อด้านการปฏิบัติงาน ต้นทุน และการให้บริการลูกค้า" maxlength="500"></td>
+      
+      
+      <td>
+        <span class="meta">(เป็นกลุ่ม)</span>
+        
+      </td>
+      <td><span class="meta">อนุมัติแล้ว</span></td>
+      
+      
+      <td><input type="number" name="sort_order" value="200" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      
+      <td><input type="text" name="name_th" value="คุณภาพและมาตรฐาน" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Quality &amp; Standards" maxlength="120" required></td>
+      
+      <td><input type="text" name="definition" value="มาตรฐานการทำงาน การควบคุมคุณภาพ และการตรวจสอบความสอดคล้อง" maxlength="500"></td>
+      
+      
+      <td>
+        
+        <select name="parent_id">
+          <option value="">— ไม่มีกลุ่ม —</option>
+          
+          
+          
+          <option value="1"
+                  >
+            กำกับดูแลและความเสี่ยง
+          </option>
+          
+          
+          
+          <option value="2"
+                  selected>
+            การปฏิบัติงานและลูกค้า
+          </option>
+          
+          
+          
+          <option value="3"
+                  >
+            เทคโนโลยีและข้อมูล
+          </option>
+          
+          
+          
+          <option value="4"
+                  >
+            บุคลากรและองค์กร
+          </option>
+          
+        </select>
+        
+      </td>
+      <td><span class="meta">อนุมัติแล้ว</span></td>
+      
+      
+      <td><input type="number" name="sort_order" value="201" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      
+      <td><input type="text" name="name_th" value="ต้นทุนและประสิทธิภาพ" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Cost &amp; Efficiency" maxlength="120" required></td>
+      
+      <td><input type="text" name="definition" value="การลดต้นทุน เพิ่มประสิทธิภาพ และการปรับปรุงกระบวนการทำงาน" maxlength="500"></td>
+      
+      
+      <td>
+        
+        <select name="parent_id">
+          <option value="">— ไม่มีกลุ่ม —</option>
+          
+          
+          
+          <option value="1"
+                  >
+            กำกับดูแลและความเสี่ยง
+          </option>
+          
+          
+          
+          <option value="2"
+                  selected>
+            การปฏิบัติงานและลูกค้า
+          </option>
+          
+          
+          
+          <option value="3"
+                  >
+            เทคโนโลยีและข้อมูล
+          </option>
+          
+          
+          
+          <option value="4"
+                  >
+            บุคลากรและองค์กร
+          </option>
+          
+        </select>
+        
+      </td>
+      <td><span class="meta">อนุมัติแล้ว</span></td>
+      
+      
+      <td><input type="number" name="sort_order" value="202" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      
+      <td><input type="text" name="name_th" value="การจัดซื้อและผู้ขาย" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Procurement &amp; Vendors" maxlength="120" required></td>
+      
+      <td><input type="text" name="definition" value="การจัดหา การคัดเลือกผู้ขาย การบริหารสัญญา และห่วงโซ่อุปทาน" maxlength="500"></td>
+      
+      
+      <td>
+        
+        <select name="parent_id">
+          <option value="">— ไม่มีกลุ่ม —</option>
+          
+          
+          
+          <option value="1"
+                  >
+            กำกับดูแลและความเสี่ยง
+          </option>
+          
+          
+          
+          <option value="2"
+                  selected>
+            การปฏิบัติงานและลูกค้า
+          </option>
+          
+          
+          
+          <option value="3"
+                  >
+            เทคโนโลยีและข้อมูล
+          </option>
+          
+          
+          
+          <option value="4"
+                  >
+            บุคลากรและองค์กร
+          </option>
+          
+        </select>
+        
+      </td>
+      <td><span class="meta">อนุมัติแล้ว</span></td>
+      
+      
+      <td><input type="number" name="sort_order" value="203" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      
+      <td><input type="text" name="name_th" value="ประสบการณ์ลูกค้า" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Customer Experience" maxlength="120" required></td>
+      
+      <td><input type="text" name="definition" value="การให้บริการ ข้อร้องเรียน และการปรับปรุงประสบการณ์ของลูกค้า" maxlength="500"></td>
+      
+      
+      <td>
+        
+        <select name="parent_id">
+          <option value="">— ไม่มีกลุ่ม —</option>
+          
+          
+          
+          <option value="1"
+                  >
+            กำกับดูแลและความเสี่ยง
+          </option>
+          
+          
+          
+          <option value="2"
+                  selected>
+            การปฏิบัติงานและลูกค้า
+          </option>
+          
+          
+          
+          <option value="3"
+                  >
+            เทคโนโลยีและข้อมูล
+          </option>
+          
+          
+          
+          <option value="4"
+                  >
+            บุคลากรและองค์กร
+          </option>
+          
+        </select>
+        
+      </td>
+      <td><span class="meta">อนุมัติแล้ว</span></td>
+      
+      
+      <td><input type="number" name="sort_order" value="204" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      
+      <td><input type="text" name="name_th" value="เทคโนโลยีและข้อมูล" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Technology &amp; Data" maxlength="120" required></td>
+      
+      <td><input type="text" name="definition" value="กลุ่มหัวข้อด้านเทคโนโลยี ข้อมูล และการเปลี่ยนผ่านสู่ดิจิทัล" maxlength="500"></td>
+      
+      
+      <td>
+        <span class="meta">(เป็นกลุ่ม)</span>
+        
+      </td>
+      <td><span class="meta">อนุมัติแล้ว</span></td>
+      
+      
+      <td><input type="number" name="sort_order" value="300" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      
+      <td><input type="text" name="name_th" value="ปัญญาประดิษฐ์และระบบอัตโนมัติ" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="AI &amp; Automation" maxlength="120" required></td>
+      
+      <td><input type="text" name="definition" value="การนำ AI และระบบอัตโนมัติมาใช้สนับสนุนหรือทดแทนงานที่ทำด้วยมือ" maxlength="500"></td>
+      
+      
+      <td>
+        
+        <select name="parent_id">
+          <option value="">— ไม่มีกลุ่ม —</option>
+          
+          
+          
+          <option value="1"
+                  >
+            กำกับดูแลและความเสี่ยง
+          </option>
+          
+          
+          
+          <option value="2"
+                  >
+            การปฏิบัติงานและลูกค้า
+          </option>
+          
+          
+          
+          <option value="3"
+                  selected>
+            เทคโนโลยีและข้อมูล
+          </option>
+          
+          
+          
+          <option value="4"
+                  >
+            บุคลากรและองค์กร
+          </option>
+          
+        </select>
+        
+      </td>
+      <td><span class="meta">อนุมัติแล้ว</span></td>
+      
+      
+      <td><input type="number" name="sort_order" value="301" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      
+      <td><input type="text" name="name_th" value="ข้อมูลและการวิเคราะห์" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Data &amp; Analytics" maxlength="120" required></td>
+      
+      <td><input type="text" name="definition" value="การจัดเก็บ วิเคราะห์ และนำเสนอข้อมูลเพื่อประกอบการตัดสินใจ" maxlength="500"></td>
+      
+      
+      <td>
+        
+        <select name="parent_id">
+          <option value="">— ไม่มีกลุ่ม —</option>
+          
+          
+          
+          <option value="1"
+                  >
+            กำกับดูแลและความเสี่ยง
+          </option>
+          
+          
+          
+          <option value="2"
+                  >
+            การปฏิบัติงานและลูกค้า
+          </option>
+          
+          
+          
+          <option value="3"
+                  selected>
+            เทคโนโลยีและข้อมูล
+          </option>
+          
+          
+          
+          <option value="4"
+                  >
+            บุคลากรและองค์กร
+          </option>
+          
+        </select>
+        
+      </td>
+      <td><span class="meta">อนุมัติแล้ว</span></td>
+      
+      
+      <td><input type="number" name="sort_order" value="302" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      
+      <td><input type="text" name="name_th" value="การเปลี่ยนผ่านสู่ดิจิทัล" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Digital Transformation" maxlength="120" required></td>
+      
+      <td><input type="text" name="definition" value="การเปลี่ยนกระบวนการทำงานจากรูปแบบเดิมไปสู่ระบบดิจิทัล" maxlength="500"></td>
+      
+      
+      <td>
+        
+        <select name="parent_id">
+          <option value="">— ไม่มีกลุ่ม —</option>
+          
+          
+          
+          <option value="1"
+                  >
+            กำกับดูแลและความเสี่ยง
+          </option>
+          
+          
+          
+          <option value="2"
+                  >
+            การปฏิบัติงานและลูกค้า
+          </option>
+          
+          
+          
+          <option value="3"
+                  selected>
+            เทคโนโลยีและข้อมูล
+          </option>
+          
+          
+          
+          <option value="4"
+                  >
+            บุคลากรและองค์กร
+          </option>
+          
+        </select>
+        
+      </td>
+      <td><span class="meta">อนุมัติแล้ว</span></td>
+      
+      
+      <td><input type="number" name="sort_order" value="303" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      
+      <td><input type="text" name="name_th" value="บุคลากรและองค์กร" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="People &amp; Organisation" maxlength="120" required></td>
+      
+      <td><input type="text" name="definition" value="กลุ่มหัวข้อด้านบุคลากร วัฒนธรรมองค์กร และความยั่งยืน" maxlength="500"></td>
+      
+      
+      <td>
+        <span class="meta">(เป็นกลุ่ม)</span>
+        
+      </td>
+      <td><span class="meta">อนุมัติแล้ว</span></td>
+      
+      
+      <td><input type="number" name="sort_order" value="400" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      
+      <td><input type="text" name="name_th" value="การพัฒนาบุคลากร" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="People Development" maxlength="120" required></td>
+      
+      <td><input type="text" name="definition" value="การฝึกอบรม การพัฒนาทักษะ และการวางแผนความก้าวหน้าในสายอาชีพ" maxlength="500"></td>
+      
+      
+      <td>
+        
+        <select name="parent_id">
+          <option value="">— ไม่มีกลุ่ม —</option>
+          
+          
+          
+          <option value="1"
+                  >
+            กำกับดูแลและความเสี่ยง
+          </option>
+          
+          
+          
+          <option value="2"
+                  >
+            การปฏิบัติงานและลูกค้า
+          </option>
+          
+          
+          
+          <option value="3"
+                  >
+            เทคโนโลยีและข้อมูล
+          </option>
+          
+          
+          
+          <option value="4"
+                  selected>
+            บุคลากรและองค์กร
+          </option>
+          
+        </select>
+        
+      </td>
+      <td><span class="meta">อนุมัติแล้ว</span></td>
+      
+      
+      <td><input type="number" name="sort_order" value="401" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      
+      <td><input type="text" name="name_th" value="การประเมินผลและค่าตอบแทน" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Performance &amp; Compensation" maxlength="120" required></td>
+      
+      <td><input type="text" name="definition" value="การประเมินผลงาน การปรับค่าตอบแทน และการพิจารณาโบนัส" maxlength="500"></td>
+      
+      
+      <td>
+        
+        <select name="parent_id">
+          <option value="">— ไม่มีกลุ่ม —</option>
+          
+          
+          
+          <option value="1"
+                  >
+            กำกับดูแลและความเสี่ยง
+          </option>
+          
+          
+          
+          <option value="2"
+                  >
+            การปฏิบัติงานและลูกค้า
+          </option>
+          
+          
+          
+          <option value="3"
+                  >
+            เทคโนโลยีและข้อมูล
+          </option>
+          
+          
+          
+          <option value="4"
+                  selected>
+            บุคลากรและองค์กร
+          </option>
+          
+        </select>
+        
+      </td>
+      <td><span class="meta">อนุมัติแล้ว</span></td>
+      
+      
+      <td><input type="number" name="sort_order" value="402" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      
+      <td><input type="text" name="name_th" value="ความผูกพันของพนักงาน" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Employee Engagement" maxlength="120" required></td>
+      
+      <td><input type="text" name="definition" value="ความผูกพัน ความพึงพอใจ และวัฒนธรรมองค์กร รวมถึงการสำรวจความคิดเห็น" maxlength="500"></td>
+      
+      
+      <td>
+        
+        <select name="parent_id">
+          <option value="">— ไม่มีกลุ่ม —</option>
+          
+          
+          
+          <option value="1"
+                  >
+            กำกับดูแลและความเสี่ยง
+          </option>
+          
+          
+          
+          <option value="2"
+                  >
+            การปฏิบัติงานและลูกค้า
+          </option>
+          
+          
+          
+          <option value="3"
+                  >
+            เทคโนโลยีและข้อมูล
+          </option>
+          
+          
+          
+          <option value="4"
+                  selected>
+            บุคลากรและองค์กร
+          </option>
+          
+        </select>
+        
+      </td>
+      <td><span class="meta">อนุมัติแล้ว</span></td>
+      
+      
+      <td><input type="number" name="sort_order" value="403" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      
+      <td><input type="text" name="name_th" value="ความยั่งยืนและสิ่งแวดล้อม" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Sustainability &amp; Environment" maxlength="120" required></td>
+      
+      <td><input type="text" name="definition" value="ผลกระทบต่อสิ่งแวดล้อม ความยั่งยืน และความรับผิดชอบต่อสังคม" maxlength="500"></td>
+      
+      
+      <td>
+        
+        <select name="parent_id">
+          <option value="">— ไม่มีกลุ่ม —</option>
+          
+          
+          
+          <option value="1"
+                  >
+            กำกับดูแลและความเสี่ยง
+          </option>
+          
+          
+          
+          <option value="2"
+                  >
+            การปฏิบัติงานและลูกค้า
+          </option>
+          
+          
+          
+          <option value="3"
+                  >
+            เทคโนโลยีและข้อมูล
+          </option>
+          
+          
+          
+          <option value="4"
+                  selected>
+            บุคลากรและองค์กร
+          </option>
+          
+        </select>
+        
+      </td>
+      <td><span class="meta">อนุมัติแล้ว</span></td>
+      
+      
+      <td><input type="number" name="sort_order" value="404" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      
+      <td><input type="text" name="name_th" value="การสื่อสารภายในองค์กร" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="Internal Communications" maxlength="120" required></td>
+      
+      <td><input type="text" name="definition" value="การสื่อสาร ประชาสัมพันธ์ และการถ่ายทอดข้อมูลภายในองค์กร" maxlength="500"></td>
+      
+      
+      <td>
+        
+        <select name="parent_id">
+          <option value="">— ไม่มีกลุ่ม —</option>
+          
+          
+          
+          <option value="1"
+                  >
+            กำกับดูแลและความเสี่ยง
+          </option>
+          
+          
+          
+          <option value="2"
+                  >
+            การปฏิบัติงานและลูกค้า
+          </option>
+          
+          
+          
+          <option value="3"
+                  >
+            เทคโนโลยีและข้อมูล
+          </option>
+          
+          
+          
+          <option value="4"
+                  selected>
+            บุคลากรและองค์กร
+          </option>
+          
+        </select>
+        
+      </td>
+      <td><span class="meta">อนุมัติแล้ว</span></td>
+      
+      
+      <td><input type="number" name="sort_order" value="405" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+    <tr>
+      <form method="post" action="#" onsubmit="return false">
+      
+      
+      <td><input type="text" name="name_th" value="ไม่มีหัวข้อที่เกี่ยวข้อง" maxlength="120" required></td>
+      <td><input type="text" name="name_en" value="No applicable topic" maxlength="120" required></td>
+      
+      <td><input type="text" name="definition" value="ใช้เมื่อไม่มีหัวข้อใดในรายการที่ตรงกับเนื้อหา — ระบบนับความถี่เพื่อดูว่ารายการหัวข้อขาดอะไร" maxlength="500"></td>
+      
+      
+      <td>
+        
+        <select name="parent_id">
+          <option value="">— ไม่มีกลุ่ม —</option>
+          
+          
+          
+          <option value="1"
+                  >
+            กำกับดูแลและความเสี่ยง
+          </option>
+          
+          
+          
+          <option value="2"
+                  >
+            การปฏิบัติงานและลูกค้า
+          </option>
+          
+          
+          
+          <option value="3"
+                  >
+            เทคโนโลยีและข้อมูล
+          </option>
+          
+          
+          
+          <option value="4"
+                  >
+            บุคลากรและองค์กร
+          </option>
+          
+        </select>
+        
+      </td>
+      <td><span class="meta">อนุมัติแล้ว</span></td>
+      
+      
+      <td><input type="number" name="sort_order" value="999" style="width:4.5rem"></td>
+      <td><input type="hidden" name="is_active_present" value="1">
+          <input type="checkbox" name="is_active" checked></td>
+      <td><button type="submit">บันทึก</button></td>
+      </form>
+      
+      <td><a class="meta"
+             href="#" data-inactive="1" style="cursor:default">ประวัติ</a></td>
+    </tr>
+    
+  </table>
+
+  
+  <p class="meta">
+    หัวข้อใหม่เพิ่มโดยตรงไม่ได้ ต้อง<a href="#" data-inactive="1" style="cursor:default">เสนอเข้ามา</a>
+    แล้วให้ผู้ดูแลระบบฐานข้อมูลความรู้พิจารณา
+  </p>
+  
+</section>
+
+
+
+  
+  <script>
+    (function () {
+      var KEY = "km_theme";
+      var btn = document.getElementById("theme-toggle");
+
+      // INLINE SVG, NOT THE EMOJI CHARACTERS THEY REPLACE (2026-08-26).
+      // The sun emoji's own ink is off-centre in its character box --
+      // measured on a canvas at 12% right of centre -- and that is a
+      // property of the emoji FONT, which differs by platform. A
+      // translateX() nudge nulled it out in one environment and did
+      // nothing in another (confirmed: this container's font centred
+      // the glyph correctly, so the nudge had nothing to correct and
+      // Kin's browser still showed it off, on a different font
+      // entirely). Nothing tunable fixes a per-font problem.
+      //
+      // Both paths are drawn on this file's own 24x24 grid, so both are
+      // centred by CONSTRUCTION rather than by measuring somebody's
+      // font and hoping the next platform agrees. `stroke="currentColor"`
+      // instead of `fill`, matching `.theme-toggle`'s `color: inherit` --
+      // no new colour variable, and the icon recolours itself for free
+      // wherever the button's text colour already changes.
+      var SUN_SVG =
+        '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" ' +
+        'stroke="currentColor" stroke-width="2" stroke-linecap="round" ' +
+        'aria-hidden="true" focusable="false">' +
+        '<circle cx="12" cy="12" r="4.5"></circle>' +
+        '<line x1="12" y1="2.5" x2="12" y2="4.5"></line>' +
+        '<line x1="12" y1="19.5" x2="12" y2="21.5"></line>' +
+        '<line x1="4.93" y1="4.93" x2="6.34" y2="6.34"></line>' +
+        '<line x1="17.66" y1="17.66" x2="19.07" y2="19.07"></line>' +
+        '<line x1="2.5" y1="12" x2="4.5" y2="12"></line>' +
+        '<line x1="19.5" y1="12" x2="21.5" y2="12"></line>' +
+        '<line x1="4.93" y1="19.07" x2="6.34" y2="17.66"></line>' +
+        '<line x1="17.66" y1="6.34" x2="19.07" y2="4.93"></line>' +
+        '</svg>';
+      // A CIRCLE WITH A BITE, not the emoji's crescent, and drawn as a
+      // filled shape rather than an outline -- an outlined crescent is
+      // two thin arcs with nothing behind them and reads as a sliver at
+      // 16px. The bite circle is offset up-and-right by the same amount
+      // in both axes, which is what keeps the remaining crescent's own
+      // visual weight centred in the 24x24 grid rather than pushed to
+      // one side.
+      var MOON_SVG =
+        '<svg viewBox="0 0 24 24" width="16" height="16" ' +
+        'aria-hidden="true" focusable="false">' +
+        '<mask id="km-moon-bite"><rect width="24" height="24" ' +
+        'fill="white"></rect><circle cx="15" cy="9" r="7" ' +
+        'fill="black"></circle></mask>' +
+        '<circle cx="12" cy="12" r="8.5" fill="currentColor" ' +
+        'mask="url(#km-moon-bite)"></circle>' +
+        '</svg>';
+
+      function stored() {
+        try { return localStorage.getItem(KEY); } catch (e) { return null; }
+      }
+      function effective() {
+        return stored() === "dark" ? "dark" : "light";
+      }
+      function paint() {
+        var mode = effective();
+        var isSun = mode === "dark";
+        // Shows what clicking WOULD switch to -- the opposite of now.
+        btn.innerHTML = isSun ? SUN_SVG : MOON_SVG;
+        btn.setAttribute("aria-label",
+          mode === "dark" ? "สลับเป็นโหมดสว่าง" : "สลับเป็นโหมดมืด");
+        btn.style.visibility = "visible";
+      }
+      btn.addEventListener("click", function () {
+        var next = effective() === "dark" ? "light" : "dark";
+        document.documentElement.setAttribute("data-theme", next);
+        try { localStorage.setItem(KEY, next); } catch (e) {}
+        paint();
+      });
+      paint();
+    })();
+  </script>
+  <script src="static/app.js"></script>
+  <script src="static/workspace.js"></script>
+  <script src="static/functional.js"></script>
+</body>
+</html>
