@@ -13,6 +13,7 @@
     catch (_) { return defaults(); }
   }
   var state = load();
+  var selectedUpload = null;
   function save() { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (_) {} }
   function esc(value) {
     return String(value == null ? "" : value).replace(/[&<>"']/g, function (c) {
@@ -34,6 +35,51 @@
     var link = document.createElement("a"); link.href = url; link.download = name; document.body.appendChild(link); link.click(); link.remove();
     setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
   }
+  function fileDatabase() {
+    return new Promise(function (resolve, reject) {
+      if (!window.indexedDB) { reject(new Error("ไม่รองรับการเก็บไฟล์")); return; }
+      var request = indexedDB.open("km_cabinet_files", 1);
+      request.onupgradeneeded = function () {
+        if (!request.result.objectStoreNames.contains("files")) request.result.createObjectStore("files");
+      };
+      request.onsuccess = function () { resolve(request.result); };
+      request.onerror = function () { reject(request.error); };
+    });
+  }
+  function storeFile(key, file) {
+    return fileDatabase().then(function (db) {
+      return new Promise(function (resolve, reject) {
+        var tx = db.transaction("files", "readwrite");
+        tx.objectStore("files").put(file, key);
+        tx.oncomplete = function () { db.close(); resolve(); };
+        tx.onerror = function () { db.close(); reject(tx.error); };
+      });
+    });
+  }
+  function readFile(key) {
+    return fileDatabase().then(function (db) {
+      return new Promise(function (resolve, reject) {
+        var request = db.transaction("files", "readonly").objectStore("files").get(key);
+        request.onsuccess = function () { db.close(); resolve(request.result || null); };
+        request.onerror = function () { db.close(); reject(request.error); };
+      });
+    });
+  }
+  function removeFile(key) {
+    return fileDatabase().then(function (db) {
+      return new Promise(function (resolve) {
+        var tx = db.transaction("files", "readwrite");
+        tx.objectStore("files").delete(key);
+        tx.oncomplete = function () { db.close(); resolve(); };
+        tx.onerror = function () { db.close(); resolve(); };
+      });
+    });
+  }
+  function humanSize(bytes) {
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1048576) return (bytes / 1024).toFixed(1) + " KB";
+    return (bytes / 1048576).toFixed(1) + " MB";
+  }
   function fields() {
     var chosen = document.querySelector("[data-choice].selected");
     return { title: value("title"), type: value("type"), area: value("area"), summary: value("summary"), mode: chosen ? chosen.dataset.choice : "knowledge" };
@@ -48,15 +94,54 @@
   function setupSubmit() {
     var form = document.getElementById("ws-submit");
     if (!form) return;
+    var choices = document.querySelectorAll("[data-choice]");
+    if (choices[0]) choices[0].querySelector(".ws-choice-icon").innerHTML = '<svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M24 5c-8.3 0-15 6.2-15 14 0 5.1 2.7 8.4 6.2 11.2 2 1.6 2.8 3.2 2.8 5.3h12c0-2.1.8-3.7 2.8-5.3C36.3 27.4 39 24.1 39 19 39 11.2 32.3 5 24 5Z" fill="currentColor" opacity=".18"/><path d="M24 5c-8.3 0-15 6.2-15 14 0 5.1 2.7 8.4 6.2 11.2 2 1.6 2.8 3.2 2.8 5.3h12c0-2.1.8-3.7 2.8-5.3C36.3 27.4 39 24.1 39 19 39 11.2 32.3 5 24 5Z" stroke="currentColor" stroke-width="3"/><path d="M18 41h12M19 35h10M24 13v9m0 0 5-5m-5 5-5-5" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    if (choices[1]) choices[1].querySelector(".ws-choice-icon").innerHTML = '<svg viewBox="0 0 48 48" fill="none" aria-hidden="true"><path d="M12 5h17l8 8v29H12V5Z" fill="currentColor" opacity=".16"/><path d="M12 5h17l8 8v29H12V5Z" stroke="currentColor" stroke-width="3" stroke-linejoin="round"/><path d="M29 5v9h8M24 34V21m0 0-6 6m6-6 6 6" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     ["title", "type", "area", "summary"].forEach(function (id) {
       var el = document.getElementById(id); if (el) el.name = id;
     });
+    var actions = form.querySelector(".ws-form-actions");
+    actions.insertAdjacentHTML("beforebegin", '<div class="ws-field full km-upload-field" hidden><label>ไฟล์แนบ <span class="km-required">*</span></label><label class="km-upload-zone" for="km-file-input"><input id="km-file-input" type="file" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.jpg,.jpeg,.png,.webp,.mp4"><span class="km-upload-icon"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5 5 5M4 20h16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></span><strong>ลากไฟล์มาวาง หรือกดเพื่อเลือกไฟล์</strong><small>รองรับ PDF, Office, รูปภาพ, วิดีโอ และไฟล์ข้อความ · สูงสุด 20 MB</small></label><div class="km-file-info" hidden><span class="km-file-thumb">DOC</span><span><strong data-file-name></strong><small data-file-size></small></span><button type="button" class="ws-icon-btn" data-remove-file aria-label="นำไฟล์ออก">×</button></div></div>');
+    var uploadField = form.querySelector(".km-upload-field");
+    var uploadZone = form.querySelector(".km-upload-zone");
+    var fileInput = document.getElementById("km-file-input");
+    var fileInfo = form.querySelector(".km-file-info");
+    function renderSelectedFile(file) {
+      selectedUpload = file || null;
+      fileInfo.hidden = !file;
+      uploadZone.classList.toggle("has-file", !!file);
+      if (file) {
+        fileInfo.querySelector("[data-file-name]").textContent = file.name;
+        fileInfo.querySelector("[data-file-size]").textContent = humanSize(file.size) + (file.type ? " · " + file.type : "");
+        fileInfo.querySelector(".km-file-thumb").textContent = (file.name.split(".").pop() || "FILE").slice(0, 4).toUpperCase();
+      }
+    }
+    function useFile(file) {
+      if (!file) return;
+      if (file.size > 20 * 1024 * 1024) { toast("ไฟล์มีขนาดเกิน 20 MB"); fileInput.value = ""; return; }
+      renderSelectedFile(file);
+      fileInput.required = false;
+      toast("เลือกไฟล์ “" + file.name + "” แล้ว");
+    }
+    function updateUploadMode(mode) {
+      var needsFile = mode === "document";
+      uploadField.hidden = !needsFile;
+      fileInput.required = needsFile && !selectedUpload;
+    }
+    fileInput.addEventListener("change", function () { useFile(fileInput.files[0]); });
+    ["dragenter", "dragover"].forEach(function (name) { uploadZone.addEventListener(name, function (event) { event.preventDefault(); uploadZone.classList.add("dragging"); }); });
+    ["dragleave", "drop"].forEach(function (name) { uploadZone.addEventListener(name, function (event) { event.preventDefault(); uploadZone.classList.remove("dragging"); }); });
+    uploadZone.addEventListener("drop", function (event) { useFile(event.dataTransfer.files[0]); });
+    form.querySelector("[data-remove-file]").addEventListener("click", function () { renderSelectedFile(null); fileInput.value = ""; fileInput.required = true; removeFile("draft"); toast("นำไฟล์ออกแล้ว"); });
+    choices.forEach(function (choice) { choice.addEventListener("click", function () { setTimeout(function () { updateUploadMode(choice.dataset.choice); }, 0); }); });
     if (state.draft) {
       Object.keys(state.draft).forEach(function (key) { var el = document.getElementById(key); if (el) el.value = state.draft[key] || ""; });
       var chosen = document.querySelector('[data-choice="' + (state.draft.mode || "knowledge") + '"]') || document.querySelector("[data-choice]");
       if (chosen) chosen.classList.add("selected");
       form.classList.add("show");
       var note = document.createElement("p"); note.className = "ws-draft-note"; note.textContent = "เปิดฉบับร่างล่าสุดให้แล้ว"; form.insertBefore(note, form.firstChild);
+      updateUploadMode(state.draft.mode);
+      if (state.draft.attachment) readFile("draft").then(function (file) { if (file) { renderSelectedFile(file); fileInput.required = false; } }).catch(function () {});
     }
   }
 
@@ -103,6 +188,12 @@
     var doc = state.documents.find(function (x) { return x.id === id; }); if (!doc) return;
     var host = document.querySelector(".ws-article"); if (!host) return;
     host.innerHTML = '<article class="ws-article-main"><div class="ws-article-kicker">รายการที่ส่งผ่านระบบ</div><h1>' + esc(doc.title) + '</h1><p class="ws-article-summary">' + esc(doc.summary) + '</p><div class="ws-pills"><span class="ws-pill purple">' + esc(doc.code) + '</span>' + pill(doc.status) + '<span class="ws-pill">v1.0</span></div><div class="ws-stepper"><div class="ws-step"><i>✓</i>ส่งเรื่อง</div><div class="ws-step"><i>' + (doc.status === "เผยแพร่แล้ว" ? "✓" : "2") + '</i>ตรวจสอบ</div><div class="ws-step"><i>' + (doc.status === "เผยแพร่แล้ว" ? "✓" : "3") + '</i>เผยแพร่</div></div><section class="ws-article-section"><h2>สรุปความรู้</h2><p>' + esc(doc.summary) + '</p></section><section class="ws-article-section"><h2>ข้อมูลการจัดหมวดหมู่</h2><p>ประเภท: ' + esc(doc.type) + '<br>หน่วยงาน: ' + esc(doc.area) + '</p></section></article><aside class="ws-aside"><section class="ws-card"><div class="ws-card-head"><h2>รายละเอียด</h2></div><div class="ws-card-body"><dl class="ws-detail"><div><dt>รหัสรายการ</dt><dd>' + esc(doc.code) + '</dd></div><div><dt>หน่วยงาน</dt><dd>' + esc(doc.area) + '</dd></div><div><dt>วันที่ส่ง</dt><dd>' + esc(doc.createdAt) + '</dd></div><div><dt>สถานะ</dt><dd data-live-status>' + esc(doc.status) + '</dd></div></dl></div></section><section class="ws-card"><div class="ws-card-head"><h2>การดำเนินการ</h2></div><div class="ws-card-body" style="display:grid;gap:8px"><button class="ws-btn primary" data-status="เผยแพร่แล้ว">อนุมัติและเผยแพร่</button><button class="ws-btn" data-status="ส่งกลับให้แก้ไข">ส่งกลับให้แก้ไข</button><button class="ws-btn danger" data-status="ยุติการใช้งาน">ยุติการใช้งาน</button></div></section></aside>';
+    if (doc.attachment) {
+      var attachment = document.createElement("section");
+      attachment.className = "ws-article-section";
+      attachment.innerHTML = '<h2>ไฟล์แนบ</h2><button class="km-attachment-row" data-local-file="' + esc(doc.id) + '"><span class="km-file-thumb">' + esc((doc.attachment.name.split(".").pop() || "FILE").slice(0, 4).toUpperCase()) + '</span><span><strong>' + esc(doc.attachment.name) + '</strong><small>' + esc(humanSize(doc.attachment.size)) + '</small></span><span class="ws-btn primary">ดาวน์โหลด</span></button>';
+      host.querySelector(".ws-article-main").appendChild(attachment);
+    }
   }
 
   function simpleModal(title, fields, onSave) {
@@ -175,7 +266,16 @@
       event.preventDefault(); event.stopImmediatePropagation(); document.body.classList.toggle("dark"); state.theme = document.body.classList.contains("dark") ? "dark" : "light"; save(); toast("บันทึกโหมดการแสดงผลแล้ว"); return;
     }
     if (target.matches("[data-save]")) {
-      event.preventDefault(); event.stopImmediatePropagation(); state.draft = fields(); save(); toast("บันทึกฉบับร่างแล้ว กลับมาแก้ไขต่อได้ทุกเมื่อ"); return;
+      event.preventDefault(); event.stopImmediatePropagation(); state.draft = fields();
+      if (state.draft.mode === "document" && selectedUpload) {
+        state.draft.attachment = { name: selectedUpload.name, type: selectedUpload.type, size: selectedUpload.size };
+        storeFile("draft", selectedUpload).then(function () { toast("บันทึกฉบับร่างพร้อมไฟล์แนบแล้ว"); }).catch(function () { toast("บันทึกข้อมูลร่างแล้ว แต่เก็บไฟล์แนบไม่สำเร็จ"); });
+      } else {
+        delete state.draft.attachment;
+        removeFile("draft");
+        toast("บันทึกฉบับร่างแล้ว กลับมาแก้ไขต่อได้ทุกเมื่อ");
+      }
+      save(); return;
     }
     if (target.matches("[data-status]")) {
       event.preventDefault(); var doc = state.documents.find(function (x) { return x.id === query.get("id"); }); if (!doc) return;
@@ -183,6 +283,17 @@
     }
     if (target.matches("[data-download]")) {
       event.preventDefault(); event.stopImmediatePropagation(); download("KM-policy-summary.txt", "สรุปนโยบายการรับของขวัญและการเลี้ยงรับรอง\r\n\r\nของขวัญที่มีมูลค่าเกิน 3,000 บาทต้องปฏิเสธหรือแจ้งหัวหน้างานภายใน 3 วันทำการ", "text/plain;charset=utf-8"); toast("ดาวน์โหลดไฟล์แล้ว"); return;
+    }
+    if (target.matches("[data-local-file]")) {
+      event.preventDefault(); event.stopImmediatePropagation();
+      readFile(target.dataset.localFile).then(function (file) {
+        if (!file) { toast("ไม่พบไฟล์ในเบราว์เซอร์เครื่องนี้"); return; }
+        var url = URL.createObjectURL(file);
+        var link = document.createElement("a"); link.href = url; link.download = file.name; document.body.appendChild(link); link.click(); link.remove();
+        setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+        toast("ดาวน์โหลด “" + file.name + "” แล้ว");
+      }).catch(function () { toast("ไม่สามารถเปิดไฟล์แนบได้"); });
+      return;
     }
     if (target.matches("[data-add-person]")) {
       simpleModal("เพิ่มบุคลากร", [{name:"name",label:"ชื่อ–นามสกุล",placeholder:"เช่น นภา ใจดี"},{name:"area",label:"หน่วยงาน",placeholder:"เช่น บริการลูกค้า"},{name:"role",label:"บทบาท",placeholder:"เช่น เจ้าของเนื้อหา"}], function (data) { state.people.push(data); save(); toast("เพิ่มบุคลากรแล้ว"); setTimeout(function () { location.reload(); }, 500); }); return;
@@ -205,7 +316,12 @@
     event.preventDefault(); event.stopImmediatePropagation();
     if (!event.target.reportValidity()) return;
     var data = fields(); data.id = makeId(); data.code = "KM-NEW-" + String(Date.now()).slice(-6); data.status = "รอตรวจสอบ"; data.createdAt = new Intl.DateTimeFormat("th-TH", { dateStyle: "medium" }).format(new Date());
-    state.documents.push(data); state.draft = null; save(); toast("ส่งความรู้เข้าสู่ระบบแล้ว"); setTimeout(function () { location.href = "entry.html?id=" + encodeURIComponent(data.id); }, 650);
+    if (data.mode === "document" && !selectedUpload) { toast("กรุณาเลือกไฟล์ที่ต้องการอัปโหลด"); return; }
+    var hasAttachment = data.mode === "document" && !!selectedUpload;
+    if (hasAttachment) data.attachment = { name: selectedUpload.name, type: selectedUpload.type, size: selectedUpload.size };
+    state.documents.push(data); state.draft = null; save();
+    var complete = hasAttachment ? storeFile(data.id, selectedUpload).then(function () { return removeFile("draft"); }) : removeFile("draft");
+    complete.then(function () { toast(hasAttachment ? "อัปโหลดไฟล์และส่งความรู้เข้าสู่ระบบแล้ว" : "ส่งความรู้เข้าสู่ระบบแล้ว"); }).catch(function () { toast("ส่งข้อมูลแล้ว แต่บันทึกไฟล์แนบไม่สำเร็จ"); }).finally(function () { setTimeout(function () { location.href = "entry.html?id=" + encodeURIComponent(data.id); }, 650); });
   }, true);
 
   document.addEventListener("keydown", function (event) { if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") { event.preventDefault(); location.href = "search-empty.html"; } });
