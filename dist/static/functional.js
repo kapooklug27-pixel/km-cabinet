@@ -80,6 +80,78 @@
     if (bytes < 1048576) return (bytes / 1024).toFixed(1) + " KB";
     return (bytes / 1048576).toFixed(1) + " MB";
   }
+  var searchCatalog = [
+    { title: "ขั้นตอนการยื่นใบลาพักร้อนผ่านระบบ ESS แบบฟอร์ม HR-018", summary: "คู่มือทีละขั้นตอนสำหรับพนักงานในการยื่นใบลาพักร้อนออนไลน์และติดตามสถานะการอนุมัติ", code: "KM-SOP-00236", area: "ทรัพยากรบุคคล", type: "กระบวนการและวิธีปฏิบัติงาน", status: "เผยแพร่แล้ว", href: "entry.html" },
+    { title: "นโยบายการรับของขวัญและการเลี้ยงรับรอง", summary: "แนวทางรับ แจ้ง และรายงานของขวัญจากคู่ค้าอย่างโปร่งใส รวมถึงเกณฑ์มูลค่าและการบันทึก Gift Register", code: "KM-POL-00142", area: "กำกับดูแล", type: "นโยบายและมาตรฐาน", status: "เผยแพร่แล้ว", href: "entry-attach.html" },
+    { title: "ขั้นตอนแก้ไขส่วนต่างใบแจ้งหนี้กับใบสั่งซื้อ", summary: "วิธีตรวจสอบและจัดการ Three-Way Match สำหรับฝ่ายบัญชี เมื่อยอดในใบแจ้งหนี้และใบสั่งซื้อไม่ตรงกัน", code: "KM-SOP-00368", area: "การเงิน", type: "กระบวนการและวิธีปฏิบัติงาน", status: "เผยแพร่แล้ว", href: "entry.html" },
+    { title: "กรณีความสำเร็จลดเวลาปิดตั๋วงาน Helpdesk", summary: "บทเรียนจากการใช้ฐานความรู้ภายในเพื่อลดเวลาการแก้ปัญหาและเพิ่มคุณภาพการสนับสนุนผู้ใช้งาน", code: "KM-BP-00026", area: "เทคโนโลยี", type: "บทเรียนและแนวปฏิบัติที่ดี", status: "เผยแพร่แล้ว", href: "entry.html" },
+    { title: "คู่มือจำแนกเวลาหยุดเครื่องจักร Six Big Losses", summary: "เกณฑ์ที่ใช้บันทึกและวิเคราะห์เวลาหยุดเครื่องจักรให้เป็นมาตรฐานเดียวกันสำหรับฝ่ายผลิต", code: "KM-SOP-00390", area: "การผลิต", type: "กระบวนการและวิธีปฏิบัติงาน", status: "เผยแพร่แล้ว", href: "entry.html" }
+  ];
+  function normalized(value) {
+    return String(value || "").normalize("NFKC").toLowerCase().replace(/[\u200b-\u200d\ufeff]/g, "").replace(/[^\p{L}\p{M}\p{N}]+/gu, " ").trim();
+  }
+  function relevance(doc, phrase) {
+    var q = normalized(phrase); if (!q) return 0;
+    var title = normalized(doc.title), summary = normalized(doc.summary), meta = normalized([doc.code, doc.area, doc.type, doc.status].join(" "));
+    var full = title + " " + summary + " " + meta;
+    var score = full.indexOf(q) >= 0 ? 100 : 0;
+    var tokens = q.split(/\s+/).filter(function (word) { return word.length > 1; });
+    tokens.forEach(function (word) {
+      if (title.indexOf(word) >= 0) score += 30;
+      else if (summary.indexOf(word) >= 0) score += 16;
+      else if (meta.indexOf(word) >= 0) score += 9;
+    });
+    return score;
+  }
+  function searchResultCard(doc, score) {
+    var href = doc.href || ("entry.html?id=" + encodeURIComponent(doc.id));
+    var percent = Math.min(99, 68 + Math.round(Math.min(score, 150) / 5));
+    return '<a class="ws-result km-live-result" href="' + href + '" data-area="' + esc(doc.area) + '"><div class="ws-result-top"><h2>' + esc(doc.title) + '</h2><span class="ws-score">ตรงกัน ' + percent + '%</span></div><p>' + esc(doc.summary) + '</p><div class="ws-pills"><span class="ws-pill purple">' + esc(doc.code) + '</span><span class="ws-pill">' + esc(doc.area) + '</span>' + pill(doc.status || "รอตรวจสอบ") + '</div></a>';
+  }
+  function setupSearch() {
+    if (route.indexOf("search") !== 0) return;
+    var form = document.querySelector("[data-search-form]");
+    var input = form && form.querySelector('[name="q"]');
+    if (!form || !input) return;
+    var phrase = query.get("q") || "";
+    if (!phrase) { try { phrase = localStorage.getItem("km_last_search") || ""; } catch (_) {} }
+    input.value = phrase;
+    form.addEventListener("submit", function (event) {
+      event.preventDefault(); event.stopImmediatePropagation();
+      var next = input.value.trim();
+      if (!next) { toast("กรุณาใส่คำค้นหา"); input.focus(); return; }
+      try { localStorage.setItem("km_last_search", next); } catch (_) {}
+      location.href = "search-empty.html?q=" + encodeURIComponent(next);
+    }, true);
+    if (!phrase) return;
+    var allDocs = searchCatalog.concat(state.documents.map(function (doc) {
+      return Object.assign({}, doc, { href: "entry.html?id=" + encodeURIComponent(doc.id) });
+    }));
+    var matches = allDocs.map(function (doc) { return { doc: doc, score: relevance(doc, phrase) }; })
+      .filter(function (item) { return item.score > 0; })
+      .sort(function (a, b) { return b.score - a.score; });
+    var oldCard = document.querySelector(".ws-search-hero + .ws-filters ~ .ws-card");
+    var oldHeading = document.querySelector(".ws-search-hero + .ws-filters + .ws-heading");
+    var oldResults = document.querySelector(".ws-results");
+    if (oldCard) oldCard.remove();
+    if (oldHeading) oldHeading.remove();
+    if (oldResults) oldResults.remove();
+    var filters = document.querySelector(".ws-filters");
+    var heading = document.createElement("div"); heading.className = "ws-heading km-search-heading";
+    heading.innerHTML = '<div><h1>ผลลัพธ์สำหรับ “' + esc(phrase) + '”</h1><p data-search-count>พบ ' + matches.length + ' รายการที่เกี่ยวข้อง</p></div><button class="ws-btn km-clear-search" type="button">ล้างคำค้นหา</button>';
+    var results = document.createElement("div"); results.className = "ws-results";
+    results.innerHTML = matches.length ? matches.map(function (item) { return searchResultCard(item.doc, item.score); }).join("") : '<div class="km-search-empty"><span>⌕</span><h2>ไม่พบความรู้ที่ตรงกับคำค้นหา</h2><p>ลองใช้คำที่สั้นลง รหัสเอกสาร หรือชื่อหน่วยงาน เช่น “ลาพักร้อน” หรือ “การเงิน”</p></div>';
+    filters.after(heading, results);
+    heading.querySelector(".km-clear-search").addEventListener("click", function () { input.value = ""; try { localStorage.removeItem("km_last_search"); } catch (_) {} location.href = "search-empty.html"; });
+    document.querySelectorAll("[data-filter]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        setTimeout(function () {
+          var visible = Array.prototype.filter.call(results.querySelectorAll(".ws-result"), function (row) { return row.style.display !== "none"; }).length;
+          var count = heading.querySelector("[data-search-count]"); if (count) count.textContent = "พบ " + visible + " รายการที่เกี่ยวข้อง";
+        }, 0);
+      });
+    });
+  }
   function fields() {
     var chosen = document.querySelector("[data-choice].selected");
     return { title: value("title"), type: value("type"), area: value("area"), summary: value("summary"), mode: chosen ? chosen.dataset.choice : "knowledge" };
@@ -156,24 +228,6 @@
     if (route === "home-employee" || route === "home-admin" || route === "index") {
       var list = document.querySelector(".ws-list");
       if (list) list.insertAdjacentHTML("afterbegin", state.documents.slice().reverse().map(documentCard).join(""));
-    }
-    if (route.indexOf("search") === 0) {
-      var last = ""; try { last = localStorage.getItem("km_last_search") || ""; } catch (_) {}
-      var input = document.querySelector('[data-search-form] [name="q"]'); if (input && last) input.value = last;
-      var results = document.querySelector(".ws-results");
-      if (results) {
-        results.insertAdjacentHTML("afterbegin", state.documents.slice().reverse().map(function (doc) {
-          return '<a class="ws-result km-added" href="entry.html?id=' + encodeURIComponent(doc.id) + '" data-area="' + esc(doc.area) + '"><div class="ws-result-top"><h2>' + esc(doc.title) + '</h2><span class="ws-score">รายการของคุณ</span></div><p>' + esc(doc.summary) + '</p><div class="ws-pills"><span class="ws-pill purple">' + esc(doc.code) + '</span><span class="ws-pill">' + esc(doc.area) + '</span>' + pill(doc.status) + '</div></a>';
-        }).join(""));
-        if (last) {
-          document.querySelectorAll(".ws-result").forEach(function (row) {
-            row.hidden = row.textContent.toLowerCase().indexOf(last.toLowerCase()) < 0;
-          });
-          var heading = document.querySelector(".ws-heading h1"); if (heading) heading.textContent = "ผลลัพธ์สำหรับ “" + last + "”";
-          var count = Array.prototype.filter.call(document.querySelectorAll(".ws-result"), function (x) { return !x.hidden; }).length;
-          var info = document.querySelector(".ws-heading p"); if (info) info.textContent = "พบ " + count + " รายการที่เกี่ยวข้อง";
-        }
-      }
     }
     if (route === "worklist") {
       var tbody = document.querySelector(".ws-table tbody");
@@ -326,7 +380,7 @@
 
   document.addEventListener("keydown", function (event) { if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "k") { event.preventDefault(); location.href = "search-empty.html"; } });
 
-  setupSubmit(); injectDocuments(); renderCustomArticle(); setupAdminActions(); setupAmeliaTheme();
+  setupSubmit(); setupSearch(); injectDocuments(); renderCustomArticle(); setupAdminActions(); setupAmeliaTheme();
   if (route === "directory" && state.people.length) {
     var peopleBody = document.querySelector(".ws-table tbody"); if (peopleBody) peopleBody.insertAdjacentHTML("afterbegin", state.people.map(function (p) { return '<tr><td><div class="ws-person"><span class="ws-avatar">' + esc(p.name.charAt(0)) + '</span><span><b>' + esc(p.name) + '</b><small>เพิ่มจากระบบ</small></span></div></td><td>' + esc(p.area) + '</td><td>' + esc(p.role) + '</td><td><span class="ws-pill green">ใช้งานอยู่</span></td></tr>'; }).join(""));
   }

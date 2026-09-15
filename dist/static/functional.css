@@ -115,3 +115,14 @@
 .km-attachment-row>span:nth-child(2){min-width:0}.km-attachment-row strong,.km-attachment-row small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.km-attachment-row small{margin-top:4px;color:#75849a}
 .kmws.dark .km-upload-zone{background:#172638;border-color:#3c6693}.kmws.dark .km-upload-zone strong{color:#e6effa}.kmws.dark .km-file-info,.kmws.dark .km-attachment-row{background:#18283a;border-color:#31475f}
 @media(max-width:600px){.ws-choice .ws-choice-icon{width:54px;height:54px;flex-basis:54px;border-radius:17px}.ws-choice .ws-choice-icon svg{width:32px;height:32px}.km-upload-zone{min-height:165px;padding:22px 16px}.km-attachment-row{grid-template-columns:46px minmax(0,1fr)}.km-attachment-row .ws-btn{grid-column:1/-1;width:100%;justify-content:center}}
+
+/* Live knowledge search */
+.km-search-heading{margin-top:26px!important;align-items:center}
+.km-search-heading h1{font-size:24px!important}
+.km-search-empty{grid-column:1/-1;padding:64px 24px;border:1px dashed #bcd5ee;border-radius:22px;background:linear-gradient(145deg,#fff,#f5faff);text-align:center}
+.km-search-empty>span{width:62px;height:62px;margin:0 auto 16px;border-radius:20px;display:grid;place-items:center;background:linear-gradient(135deg,#e0f2fe,#bfdbfe);color:#0878f9;font-size:34px;font-weight:800}
+.km-search-empty h2{margin:0 0 8px;color:#17365f}.km-search-empty p{max-width:520px;margin:auto;color:#75849a;line-height:1.7}
+.km-live-result{animation:km-result-in .28s ease both}.km-live-result:nth-child(2){animation-delay:.04s}.km-live-result:nth-child(3){animation-delay:.08s}.km-live-result:nth-child(4){animation-delay:.12s}
+@keyframes km-result-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.kmws.dark .km-search-empty{background:#172638;border-color:#3c6693}.kmws.dark .km-search-empty h2{color:#e6effa}
+@media(max-width:600px){.km-search-heading{align-items:flex-start}.km-search-heading .km-clear-search{margin-top:10px}.ws-search-form{align-items:stretch}.ws-search-form .ws-btn{width:100%;justify-content:center}}
